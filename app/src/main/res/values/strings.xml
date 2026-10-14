@@ -1,0 +1,39 @@
+<resources>
+    <string name="app_name">Open Player</string>
+    <string name="open_url">Abrir link</string>
+    <string name="url_hint">https://exemplo.com/video.mp4</string>
+    <string name="play">Reproduzir</string>
+    <string name="cancel">Cancelar</string>
+    <string name="need_permission">Permita o acesso aos vídeos para listar os arquivos do aparelho.</string>
+    <string name="no_videos">Nenhum vídeo encontrado.</string>
+    <string name="grant">Permitir acesso</string>
+    <string name="playback_error">Não foi possível reproduzir este vídeo.</string>
+    <string name="themes">Temas</string>
+    <string name="theme_mode">Modo</string>
+    <string name="mode_system">Sistema</string>
+    <string name="mode_light">Claro</string>
+    <string name="mode_dark">Escuro</string>
+    <string name="amoled">Preto AMOLED (no modo escuro)</string>
+    <string name="accent_title">Cor de destaque</string>
+    <string name="accent_blue">Azul</string>
+    <string name="accent_green">Verde</string>
+    <string name="accent_orange">Laranja</string>
+    <string name="accent_pink">Rosa</string>
+    <string name="accent_purple">Roxo</string>
+    <string name="accent_red">Vermelho</string>
+    <string name="accent_teal">Turquesa</string>
+    <string name="tab_folders">Pastas</string>
+    <string name="tab_videos">Vídeos</string>
+    <string name="tab_downloads">Downloads</string>
+    <string name="no_downloads">Nenhum vídeo na pasta Download.</string>
+    <plurals name="video_count">
+        <item quantity="one">%d vídeo</item>
+        <item quantity="other">%d vídeos</item>
+    </plurals>
+    <string name="bg_title">Imagem de fundo</string>
+    <string name="bg_pick">Escolher imagem da galeria</string>
+    <string name="bg_remove">Remover imagem</string>
+    <string name="bg_dim">Intensidade do véu sobre a imagem</string>
+    <string name="bg_error">Não foi possível usar essa imagem.</string>
+    <string name="back">Voltar</string>
+</resources>
