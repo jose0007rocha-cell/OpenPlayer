@@ -1,0 +1,127 @@
+<resources>
+    <string name="app_name">Open Player</string>
+    <string name="open_url">Abrir link</string>
+    <string name="url_hint">https://exemplo.com/video.mp4</string>
+    <string name="play">Reproduzir</string>
+    <string name="cancel">Cancelar</string>
+    <string name="need_permission">Permita o acesso aos vídeos para listar os arquivos do aparelho.</string>
+    <string name="no_videos">Nenhum vídeo encontrado.</string>
+    <string name="grant">Permitir acesso</string>
+    <string name="playback_error">Não foi possível reproduzir este vídeo.</string>
+
+    <string name="themes">Temas</string>
+    <string name="theme_mode">Modo</string>
+    <string name="mode_system">Sistema</string>
+    <string name="mode_light">Claro</string>
+    <string name="mode_dark">Escuro</string>
+    <string name="amoled">Preto AMOLED (no modo escuro)</string>
+    <string name="accent_title">Cor de destaque</string>
+    <string name="accent_blue">Azul</string>
+    <string name="accent_green">Verde</string>
+    <string name="accent_orange">Laranja</string>
+    <string name="accent_pink">Rosa</string>
+    <string name="accent_purple">Roxo</string>
+    <string name="accent_red">Vermelho</string>
+    <string name="accent_teal">Turquesa</string>
+
+    <string name="tab_folders">Pastas</string>
+    <string name="tab_videos">Vídeos</string>
+    <string name="tab_downloads">Downloads</string>
+    <string name="no_downloads">Nenhum vídeo na pasta Download.</string>
+
+    <plurals name="video_count">
+        <item quantity="one">%d vídeo</item>
+        <item quantity="other">%d vídeos</item>
+    </plurals>
+
+    <string name="bg_title">Imagem de fundo</string>
+    <string name="bg_pick">Escolher imagem da galeria</string>
+    <string name="bg_remove">Remover imagem</string>
+    <string name="bg_dim">Intensidade do véu sobre a imagem</string>
+    <string name="bg_error">Não foi possível usar essa imagem.</string>
+
+    <string name="back">Voltar</string>
+    <string name="more">Mais opções</string>
+
+    <string name="sel_hide">Ocultar</string>
+    <string name="sel_show">Mostrar</string>
+    <string name="sel_delete">Excluir</string>
+    <string name="sel_close">Cancelar seleção</string>
+    <string name="hidden_done">Pastas ocultadas.</string>
+    <string name="shown_done">Pastas mostradas de novo.</string>
+    <string name="delete_msg">Todos os vídeos dentro das pastas selecionadas serão apagados do aparelho. Isso não pode ser desfeito.</string>
+    <string name="delete_ok">Excluir</string>
+    <string name="delete_done">Vídeos excluídos.</string>
+
+    <string name="settings_title">Configurações</string>
+    <string name="settings_section">Vídeo e legenda</string>
+    <string name="settings_subs">Legendas</string>
+    <string name="rot_auto">Automática</string>
+    <string name="rot_portrait">Retrato</string>
+    <string name="rot_landscape">Paisagem</string>
+    <string name="subs_enable">Ativar legendas</string>
+    <string name="subs_render">Renderização da legenda</string>
+    <string name="subs_size">Tamanho</string>
+    <string name="subs_color">Cor do texto</string>
+    <string name="subs_bg">Fundo do texto</string>
+    <string name="size_small">Pequeno</string>
+    <string name="size_medium">Médio</string>
+    <string name="size_large">Grande</string>
+    <string name="color_white">Branco</string>
+    <string name="color_yellow">Amarelo</string>
+    <string name="bg_none">Sem fundo (contorno)</string>
+    <string name="bg_shadow">Sombra</string>
+    <string name="bg_box">Caixa preta</string>
+
+    <string name="menu_themes">Temas</string>
+    <string name="menu_select">Selecionar</string>
+    <string name="menu_settings">Configurações</string>
+
+    <string name="hide">Ocultar</string>
+    <string name="show">Mostrar</string>
+    <string name="delete">Excluir</string>
+    <string name="hidden_tag">oculta</string>
+    <string name="all_hidden">Todas as pastas estão ocultas. Toque em ⋮ > Selecionar para mostrá-las de novo.</string>
+    <string name="delete_title">Excluir pastas</string>
+    <string name="deleted">Excluído.</string>
+    <string name="delete_fail">Não foi possível excluir alguns vídeos.</string>
+
+    <plurals name="selected_count">
+        <item quantity="one">%d selecionada</item>
+        <item quantity="other">%d selecionadas</item>
+    </plurals>
+
+    <plurals name="delete_message">
+        <item quantity="one">Apagar %d pasta e todos os vídeos dentro dela? Isso não pode ser desfeito.</item>
+        <item quantity="other">Apagar %d pastas e todos os vídeos dentro delas? Isso não pode ser desfeito.</item>
+    </plurals>
+
+    <string name="settings_group">Vídeo e legenda</string>
+    <string name="settings_video">Vídeo</string>
+    <string name="settings_rotation">Rotação da tela</string>
+    <string name="settings_subtitles">Legendas</string>
+    <string name="settings_subs_enable">Ativar legendas</string>
+    <string name="settings_subs_render">Renderização de legendas</string>
+    <string name="settings_sub_size">Tamanho da legenda</string>
+    <string name="settings_sub_style">Estilo da legenda</string>
+
+    <string-array name="rotation_options">
+        <item>Seguir o sistema</item>
+        <item>Automática (sensor)</item>
+        <item>Retrato</item>
+        <item>Paisagem</item>
+    </string-array>
+
+    <string-array name="sub_size_options">
+        <item>Pequena</item>
+        <item>Média</item>
+        <item>Grande</item>
+    </string-array>
+
+    <string-array name="sub_style_options">
+        <item>Branca com sombra</item>
+        <item>Branca com fundo preto</item>
+        <item>Branca com contorno</item>
+        <item>Amarela com sombra</item>
+    </string-array>
+</resources>
