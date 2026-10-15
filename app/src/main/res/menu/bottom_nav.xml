@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_folders"
+        android:icon="@drawable/ic_folder"
+        android:title="@string/tab_folders" />
+    <item
+        android:id="@+id/nav_videos"
+        android:icon="@drawable/ic_video"
+        android:title="@string/tab_videos" />
+    <item
+        android:id="@+id/nav_downloads"
+        android:icon="@drawable/ic_download"
+        android:title="@string/tab_downloads" />
+</menu>
