@@ -13,19 +13,20 @@ class FolderListFragment : Fragment() {
 
     private var _b: FragmentListBinding? = null
 
-    private val adapter = FolderAdapter { onOpen = { folder ->
+    private val adapter = FolderAdapter(
+    onOpen = { folder ->
         startActivity(
             Intent(requireContext(), FolderActivity::class.java)
                 .putExtra(FolderActivity.EXTRA_ID, folder.id)
                 .putExtra(FolderActivity.EXTRA_NAME, folder.name)
         )
     },
-    onLogPress = { folder -> 
+    onLongPress = { folder ->
         adapter.startSelecting(folder.id)
     },
-    onSelectionChanged = {}
-    )
-
+    onSelectionChanged = { }
+)
+    
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
