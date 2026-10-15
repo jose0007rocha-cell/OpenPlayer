@@ -13,13 +13,18 @@ class FolderListFragment : Fragment() {
 
     private var _b: FragmentListBinding? = null
 
-    private val adapter = FolderAdapter { folder ->
+    private val adapter = FolderAdapter { onOpen = { folder ->
         startActivity(
             Intent(requireContext(), FolderActivity::class.java)
                 .putExtra(FolderActivity.EXTRA_ID, folder.id)
                 .putExtra(FolderActivity.EXTRA_NAME, folder.name)
         )
-    }
+    },
+    onLogPress = { folder -> 
+        adapter.startSelecting(folder.id)
+    },
+    onSelectionChanged = {}
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -63,7 +68,7 @@ class FolderListFragment : Fragment() {
                 } else {
                     b.emptyBox.visibility = View.GONE
                     b.list.visibility = View.VISIBLE
-                    adapter.submit(folders)
+                    adapter.submit(folders, FolderPrefs.hidden(ctx))
                 }
             }
         }.start()
@@ -74,3 +79,4 @@ class FolderListFragment : Fragment() {
         _b = null
     }
 }
+Corrige FolderAdapter no FolderListFragment
