@@ -12,22 +12,7 @@ import com.example.openplayer.databinding.FragmentListBinding
 class FolderListFragment : Fragment() {
 
     private var _b: FragmentListBinding? = null
-
-    private val adapter by lazy {
-        FolderAdapter(
-            onOpen = { folder ->
-                startActivity(
-                    Intent(requireContext(), FolderActivity::class.java)
-                        .putExtra(FolderActivity.EXTRA_ID, folder.id)
-                        .putExtra(FolderActivity.EXTRA_NAME, folder.name)
-                )
-            },
-            onLongPress = { folder: Folder ->
-                adapter.startSelecting(folder.id)
-            },
-            onSelectionChanged = { }
-        )
-    }
+    private lateinit var adapter: FolderAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -38,6 +23,21 @@ class FolderListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = _b ?: return
+
+        adapter = FolderAdapter(
+            onOpen = { folder ->
+                startActivity(
+                    Intent(requireContext(), FolderActivity::class.java)
+                        .putExtra(FolderActivity.EXTRA_ID, folder.id)
+                        .putExtra(FolderActivity.EXTRA_NAME, folder.name)
+                )
+            },
+            onLongPress = { folder ->
+                adapter.startSelecting(folder.id)
+            },
+            onSelectionChanged = { }
+        )
+
         b.list.layoutManager = LinearLayoutManager(requireContext())
         b.list.adapter = adapter
         b.btnGrant.setOnClickListener { (activity as? MainActivity)?.requestPermission() }
