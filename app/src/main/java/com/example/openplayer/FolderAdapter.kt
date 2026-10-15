@@ -13,7 +13,13 @@ class FolderAdapter(
 ) : RecyclerView.Adapter<FolderAdapter.Holder>() {
 
     private var items: List<Folder> = emptyList()
-    private var hidden: Set<Long> = emptySet()
+    private val adapter = FolderAdapter { folder ->
+    startActivity(
+        Intent(requireContext(), FolderActivity::class.java)
+            .putExtra(FolderActivity.EXTRA_ID, folder.id)
+            .putExtra(FolderActivity.EXTRA_NAME, folder.name)
+    )
+}
 
     var selecting = false
         private set
