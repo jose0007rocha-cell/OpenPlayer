@@ -22,7 +22,7 @@ class FolderListFragment : Fragment() {
                         .putExtra(FolderActivity.EXTRA_NAME, folder.name)
                 )
             },
-            onLongPress = { folder ->
+            onLongPress = { folder: Folder ->
                 adapter.startSelecting(folder.id)
             },
             onSelectionChanged = { }
