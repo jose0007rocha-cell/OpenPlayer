@@ -1,8 +1,8 @@
 # Open Player
 
 Player de vídeo simples: sem anúncios, sem compras, sem rastreadores.
-Temas: modo claro/escuro/sistema, preto AMOLED e 7 cores de destaque (botão "Temas").
-Motor: AndroidX Media3 (ExoPlayer). Abre vídeos locais, links http/https (MP4, HLS, DASH) e arquivos enviados por outros apps.
+Temas: modo /escuro/sistema, preto AMOLED e 7 cores de destaque e permite usar imaagens a galeria como tema (botão "tres pontos").
+Motor: AndroidX Media3 (ExoPlayer). Abre vídeos locais, (MP4, HLS, DASH).
 
 ## Compilar (opção A: Android Studio)
 1. Abra a pasta no Android Studio (Koala ou mais novo) e aguarde o Gradle sincronizar.
