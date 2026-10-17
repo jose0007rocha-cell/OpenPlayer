@@ -38,5 +38,5 @@ dependencies {
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.3.1+1")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
-    coreLibraryDesugaring("com.android.tools.desugar_jdk_libs:2.1.5")	
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")	
 }
