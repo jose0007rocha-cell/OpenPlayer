@@ -68,6 +68,8 @@ class ThemeActivity : AppCompatActivity() {
         }
         refreshBackground()
 
+        ThemeManager.styleSwitch(this, b.switchAmoled)
+        ThemeManager.styleGradientButton(this, b.btnBgPick)
         b.switchAmoled.isChecked = ThemeManager.isAmoled(this)
         b.switchAmoled.setOnCheckedChangeListener { _, on ->
             ThemeManager.setAmoled(this, on)

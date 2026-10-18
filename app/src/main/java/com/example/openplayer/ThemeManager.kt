@@ -8,7 +8,11 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
+import android.content.res.ColorStateList
 import android.graphics.drawable.ClipDrawable
+import android.graphics.drawable.InsetDrawable
+import android.graphics.drawable.RippleDrawable
+import android.graphics.drawable.StateListDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Drawable
@@ -17,7 +21,9 @@ import android.net.Uri
 import android.os.Build
 import android.view.Gravity
 import android.view.View
+import android.widget.Button
 import android.widget.SeekBar
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
@@ -296,6 +302,57 @@ object ThemeManager {
         }
         sb.thumb = thumb
         sb.splitTrack = false
+    }
+
+    /** Botão com fundo em gradiente (cantos totalmente arredondados) e brilho ao tocar. */
+    fun styleGradientButton(c: Context, btn: Button) {
+        val d = c.resources.displayMetrics.density
+        val (s, e) = gradientColors(c)
+        val shape = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(s, e)).apply {
+            cornerRadius = 100f * d
+        }
+        val lum = ColorUtils.calculateLuminance(ColorUtils.blendARGB(s, e, 0.5f))
+        btn.backgroundTintList = null
+        btn.background = RippleDrawable(ColorStateList.valueOf(0x33FFFFFF), shape, null)
+        btn.setTextColor(if (lum > 0.5) Color.BLACK else Color.WHITE)
+    }
+
+    /** Interruptor com trilho em gradiente quando ligado e bolinha branca. */
+    fun styleSwitch(c: Context, sw: SwitchCompat) {
+        val d = c.resources.displayMetrics.density
+        val (s, e) = gradientColors(c)
+        val trackW = (52f * d).toInt()
+        val trackH = (28f * d).toInt()
+        val trackOn = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(s, e)).apply {
+            cornerRadius = 14f * d
+            setSize(trackW, trackH)
+        }
+        val trackOff = GradientDrawable().apply {
+            setColor(0x22FFFFFF)
+            setStroke((2f * d).toInt(), 0x77FFFFFF)
+            cornerRadius = 14f * d
+            setSize(trackW, trackH)
+        }
+        val track = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_checked), trackOn)
+            addState(intArrayOf(), trackOff)
+        }
+        fun knob(color: Int, size: Float): Drawable {
+            val dot = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(color)
+                setSize((size * d).toInt(), (size * d).toInt())
+            }
+            return InsetDrawable(dot, ((28f - size) / 2f * d).toInt())
+        }
+        val thumb = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_checked), knob(Color.WHITE, 22f))
+            addState(intArrayOf(), knob(Color.parseColor("#B8B8C2"), 16f))
+        }
+        sw.thumbTintList = null
+        sw.trackTintList = null
+        sw.trackDrawable = track
+        sw.thumbDrawable = thumb
     }
 
     /** Sem imagem: uma coloração leve do tema (gradiente suave) no fundo da tela. */

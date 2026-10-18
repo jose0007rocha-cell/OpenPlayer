@@ -18,6 +18,7 @@ class SettingsActivity : AppCompatActivity() {
 
         b.btnBack.setOnClickListener { finish() }
 
+        ThemeManager.styleSwitch(this, b.switchSubs)
         b.switchSubs.isChecked = AppSettings.subtitlesOn(this)
         b.switchSubs.setOnCheckedChangeListener { _, on -> AppSettings.setSubtitlesOn(this, on) }
 
