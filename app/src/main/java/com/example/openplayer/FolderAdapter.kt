@@ -53,6 +53,7 @@ class FolderAdapter(
         val isHidden = f.id in hidden
         var count = res.getQuantityString(R.plurals.video_count, f.count, f.count)
         if (isHidden) count += "  •  " + res.getString(R.string.hidden_tag)
+        holder.b.folderIcon.background = ThemeManager.gradientIconBackground(holder.itemView.context)
         holder.b.name.text = f.name
         holder.b.count.text = count
         holder.b.root.alpha = if (isHidden) 0.5f else 1f

@@ -38,15 +38,10 @@ object PopupDialog {
 
         for (g in groups) {
             if (g.title != null) {
-                val label = TextView(dialog.context).apply {
+                val label = GradientTextView(dialog.context).apply {
                     text = g.title
                     textSize = 13f
                     setTypeface(typeface, android.graphics.Typeface.BOLD)
-                    setTextColor(
-                        MaterialColors.getColor(
-                            dialog.context, com.google.android.material.R.attr.colorPrimary, Color.WHITE
-                        )
-                    )
                     setPadding((12 * density).toInt(), (10 * density).toInt(), (12 * density).toInt(), (2 * density).toInt())
                 }
                 body.addView(label)

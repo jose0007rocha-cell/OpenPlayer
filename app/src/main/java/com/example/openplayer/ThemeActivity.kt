@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.GridLayout
 import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,20 +53,18 @@ class ThemeActivity : AppCompatActivity() {
             ThemeManager.removeBackground(this)
             recreate()
         }
-        b.sliderDim.value = ThemeManager.getDim(this).toFloat().coerceIn(0f, 90f)
-        b.sliderDim.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) {
-                ThemeManager.setDim(this, value.toInt())
-                ThemeManager.applyBackground(this)
-            }
+        ThemeManager.styleSeekBar(this, b.sliderDim)
+        b.sliderDim.progress = ThemeManager.getDim(this).coerceIn(0, 90) / 5
+        listen(b.sliderDim) { value ->
+            ThemeManager.setDim(this, value)
+            ThemeManager.applyBackground(this)
         }
-        b.sliderBlur.value = ThemeManager.getBlur(this).toFloat().coerceIn(0f, 100f)
-        b.sliderBlur.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) {
-                ThemeManager.setBlur(this, value.toInt())
-                ThemeManager.applyBackground(this)
-                ThemeManager.loadBackground(this)?.let { b.bgPreview.setImageBitmap(it) }
-            }
+        ThemeManager.styleSeekBar(this, b.sliderBlur)
+        b.sliderBlur.progress = ThemeManager.getBlur(this).coerceIn(0, 100) / 5
+        listen(b.sliderBlur) { value ->
+            ThemeManager.setBlur(this, value)
+            ThemeManager.applyBackground(this)
+            ThemeManager.loadBackground(this)?.let { b.bgPreview.setImageBitmap(it) }
         }
         refreshBackground()
 
@@ -76,6 +75,18 @@ class ThemeActivity : AppCompatActivity() {
         }
 
         buildAccentGrid()
+    }
+
+    /** Barra em passos de 5: avisa o valor (0..100) só quando o usuário mexe. */
+    private fun listen(sb: SeekBar, onChange: (Int) -> Unit) {
+        sb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) onChange(progress * 5)
+            }
+
+            override fun onStartTrackingTouch(bar: SeekBar?) {}
+            override fun onStopTrackingTouch(bar: SeekBar?) {}
+        })
     }
 
     private fun refreshBackground() {

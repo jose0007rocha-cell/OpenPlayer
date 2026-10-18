@@ -8,12 +8,17 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
 import android.net.Uri
 import android.os.Build
+import android.view.Gravity
 import android.view.View
+import android.widget.SeekBar
+import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -256,9 +261,62 @@ object ThemeManager {
         }
     }
 
+    private fun darker(c: Int): Int = ColorUtils.blendARGB(c, Color.BLACK, 0.62f)
+
+    /** Fundo gradiente (versão escura das duas cores do tema) para ícones de pasta. */
+    fun gradientIconBackground(c: Context, radiusDp: Float = 12f): GradientDrawable {
+        val (s, e) = gradientColors(c)
+        return GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(darker(s), darker(e))).apply {
+            cornerRadius = radiusDp * c.resources.displayMetrics.density
+        }
+    }
+
+    /** Barra deslizante com trilho e bolinha em gradiente. */
+    fun styleSeekBar(c: Context, sb: SeekBar) {
+        val d = c.resources.displayMetrics.density
+        val (s, e) = gradientColors(c)
+        val track = GradientDrawable().apply {
+            setColor(0x33FFFFFF)
+            cornerRadius = 3f * d
+        }
+        val fill = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, intArrayOf(s, e)).apply {
+            cornerRadius = 3f * d
+        }
+        val clip = ClipDrawable(fill, Gravity.START, ClipDrawable.HORIZONTAL)
+        val layers = LayerDrawable(arrayOf<Drawable>(track, clip))
+        layers.setId(0, android.R.id.background)
+        layers.setId(1, android.R.id.progress)
+        val inset = (13f * d).toInt()
+        layers.setLayerInset(0, 0, inset, 0, inset)
+        layers.setLayerInset(1, 0, inset, 0, inset)
+        sb.progressDrawable = layers
+        val thumb = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(s, e)).apply {
+            shape = GradientDrawable.OVAL
+            setSize((22f * d).toInt(), (22f * d).toInt())
+        }
+        sb.thumb = thumb
+        sb.splitTrack = false
+    }
+
+    /** Sem imagem: uma coloração leve do tema (gradiente suave) no fundo da tela. */
+    private fun applyTint(a: Activity) {
+        if (isAmoled(a)) return // AMOLED continua preto puro
+        val base = ContextCompat.getColor(a, R.color.app_bg)
+        val (s, e) = gradientColors(a)
+        val top = ColorUtils.blendARGB(base, s, 0.24f)
+        val bottom = ColorUtils.blendARGB(base, e, 0.16f)
+        a.window.setBackgroundDrawable(
+            GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(top, base, bottom))
+        )
+    }
+
     /** Põe a imagem (com um véu escuro/claro por cima) como fundo da janela. */
     fun applyBackground(a: Activity) {
-        val bmp = loadBackground(a) ?: return
+        val bmp = loadBackground(a)
+        if (bmp == null) {
+            applyTint(a)
+            return
+        }
         val veil = ColorUtils.setAlphaComponent(
             if (isNight(a)) Color.BLACK else Color.WHITE,
             getDim(a) * 255 / 100

@@ -87,14 +87,15 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
-        <com.google.android.material.slider.Slider
+        <SeekBar
             android:id="@+id/sliderDim"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:stepSize="5"
-            android:value="45"
-            android:valueFrom="0"
-            android:valueTo="90"
+            android:max="18"
+            android:maxHeight="32dp"
+            android:minHeight="32dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:visibility="gone" />
 
         <TextView
@@ -105,14 +106,15 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
-        <com.google.android.material.slider.Slider
+        <SeekBar
             android:id="@+id/sliderBlur"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:stepSize="5"
-            android:value="0"
-            android:valueFrom="0"
-            android:valueTo="100"
+            android:max="20"
+            android:maxHeight="32dp"
+            android:minHeight="32dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
             android:visibility="gone" />
 
         <com.google.android.material.materialswitch.MaterialSwitch

@@ -10,6 +10,7 @@
     android:paddingVertical="10dp">
 
     <ImageView
+        android:id="@+id/folderIcon"
         android:layout_width="52dp"
         android:layout_height="52dp"
         android:background="@drawable/bg_folder_icon"
@@ -41,13 +42,12 @@
             android:alpha="0.7"
             android:textSize="13sp" />
 
-        <TextView
+        <com.example.openplayer.GradientTextView
             android:id="@+id/hiddenTag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/hidden_tag"
-            android:textColor="?attr/colorPrimary"
             android:textSize="12sp"
             android:textStyle="bold"
             android:visibility="gone" />

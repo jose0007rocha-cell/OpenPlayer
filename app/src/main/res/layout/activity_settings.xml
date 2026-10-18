@@ -35,21 +35,19 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <TextView
+        <com.example.openplayer.GradientTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/settings_group"
-            android:textColor="?attr/colorPrimary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <TextView
+        <com.example.openplayer.GradientTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="@string/settings_video"
-            android:textColor="?attr/colorPrimary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -76,12 +74,11 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <TextView
+        <com.example.openplayer.GradientTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/settings_subtitles"
-            android:textColor="?attr/colorPrimary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
@@ -92,12 +89,11 @@
             android:layout_marginTop="4dp"
             android:text="@string/settings_subs_enable" />
 
-        <TextView
+        <com.example.openplayer.GradientTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/settings_subs_render"
-            android:textColor="?attr/colorPrimary"
             android:textSize="14sp"
             android:textStyle="bold" />
 
