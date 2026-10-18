@@ -106,6 +106,7 @@ class ThemeActivity : AppCompatActivity() {
         b.accentGrid.removeAllViews()
         for (accent in ThemeManager.accents) {
             val color = ContextCompat.getColor(this, accent.colorRes)
+            val colorEnd = ContextCompat.getColor(this, accent.endColorRes)
             val textColor =
                 if (ColorUtils.calculateLuminance(color) > 0.5) Color.BLACK else Color.WHITE
             val swatch = TextView(this).apply {
@@ -115,7 +116,8 @@ class ThemeActivity : AppCompatActivity() {
                 setTextColor(textColor)
                 background = GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
-                    setColor(color)
+                    setOrientation(GradientDrawable.Orientation.TL_BR)
+                    setColors(intArrayOf(color, colorEnd))
                 }
                 contentDescription = getString(accent.nameRes)
                 layoutParams = GridLayout.LayoutParams().apply {

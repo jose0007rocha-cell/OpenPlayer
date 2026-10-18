@@ -22,19 +22,23 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.graphics.ColorUtils
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
+import kotlin.math.roundToInt
 
 object ThemeManager {
 
-    class Accent(val id: String, val nameRes: Int, val styleRes: Int, val colorRes: Int)
+    class Accent(val id: String, val nameRes: Int, val styleRes: Int, val colorRes: Int, val endColorRes: Int)
 
     val accents = listOf(
-        Accent("blue", R.string.accent_blue, R.style.AccentBlue, R.color.accent_blue),
-        Accent("green", R.string.accent_green, R.style.AccentGreen, R.color.accent_green),
-        Accent("orange", R.string.accent_orange, R.style.AccentOrange, R.color.accent_orange),
-        Accent("pink", R.string.accent_pink, R.style.AccentPink, R.color.accent_pink),
-        Accent("purple", R.string.accent_purple, R.style.AccentPurple, R.color.accent_purple),
-        Accent("red", R.string.accent_red, R.style.AccentRed, R.color.accent_red),
-        Accent("teal", R.string.accent_teal, R.style.AccentTeal, R.color.accent_teal)
+        Accent("blue", R.string.accent_blue, R.style.AccentBlue, R.color.accent_blue, R.color.accent_blue_end),
+        Accent("green", R.string.accent_green, R.style.AccentGreen, R.color.accent_green, R.color.accent_green_end),
+        Accent("orange", R.string.accent_orange, R.style.AccentOrange, R.color.accent_orange, R.color.accent_orange_end),
+        Accent("pink", R.string.accent_pink, R.style.AccentPink, R.color.accent_pink, R.color.accent_pink_end),
+        Accent("purple", R.string.accent_purple, R.style.AccentPurple, R.color.accent_purple, R.color.accent_purple_end),
+        Accent("red", R.string.accent_red, R.style.AccentRed, R.color.accent_red, R.color.accent_red_end),
+        Accent("teal", R.string.accent_teal, R.style.AccentTeal, R.color.accent_teal, R.color.accent_teal_end),
+        Accent("sunset", R.string.accent_sunset, R.style.AccentSunset, R.color.accent_sunset, R.color.accent_sunset_end),
+        Accent("ocean", R.string.accent_ocean, R.style.AccentOcean, R.color.accent_ocean, R.color.accent_ocean_end),
+        Accent("neon", R.string.accent_neon, R.style.AccentNeon, R.color.accent_neon, R.color.accent_neon_end)
     )
 
     private fun prefs(c: Context) = c.getSharedPreferences("theme", Context.MODE_PRIVATE)
@@ -84,6 +88,18 @@ object ThemeManager {
         prefs(c).edit().putInt("bg_blur", value).apply()
     }
 
+    fun currentAccent(c: Context): Accent =
+        accents.firstOrNull { it.id == getAccentId(c) } ?: accents[0]
+
+    /** Par de cores do gradiente do tema atual: (início, fim). */
+    fun gradientColors(c: Context): Pair<Int, Int> {
+        val a = currentAccent(c)
+        return Pair(
+            androidx.core.content.ContextCompat.getColor(c, a.colorRes),
+            androidx.core.content.ContextCompat.getColor(c, a.endColorRes)
+        )
+    }
+
     fun accentStyle(c: Context): Int =
         (accents.firstOrNull { it.id == getAccentId(c) } ?: accents[0]).styleRes
 
@@ -125,14 +141,17 @@ object ThemeManager {
         return out
     }
 
-    /** Desfoque rápido: reduz a imagem, aplica média em 3 passadas e deixa o Android esticar de volta. */
+    /**
+     * Desfoque suave: trabalha numa imagem reduzida (mais detalhe que antes) e o raio máximo
+     * é bem menor, então o valor 100 deixa a imagem só levemente ofuscada, sem virar mancha.
+     */
     private fun makeBlurred(src: Bitmap, level: Int): Bitmap {
-        val sw = 360
+        val sw = 540
         val sh = (src.height * (sw.toFloat() / src.width)).toInt().coerceAtLeast(1)
         val small = Bitmap.createScaledBitmap(src, sw, sh, true)
         val px = IntArray(sw * sh)
         small.getPixels(px, 0, sw, 0, 0, sw, sh)
-        val radius = (level / 5).coerceIn(1, 20)
+        val radius = (level * 0.1f).roundToInt().coerceIn(1, 10)
         val tmp = IntArray(px.size)
         repeat(3) {
             blurPass(px, tmp, sw, sh, radius, true)

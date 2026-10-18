@@ -206,4 +206,10 @@
     <string name="order_desc">Decrescente</string>
     <string name="view_toggle">Alternar lista e grade</string>
     <string name="bg_blur">Desfoque da imagem</string>
+    <string name="accent_sunset">Pôr do sol</string>
+    <string name="accent_ocean">Oceano</string>
+    <string name="accent_neon">Neon</string>
+    <string name="subs_toggle">Ativar ou desativar legenda</string>
+    <string name="subs_now_on">Legenda ativada</string>
+    <string name="subs_now_off">Legenda desativada</string>
 </resources>

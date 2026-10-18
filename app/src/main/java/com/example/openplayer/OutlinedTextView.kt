@@ -3,21 +3,27 @@ package com.example.openplayer
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Shader
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
-import com.google.android.material.color.MaterialColors
 
-/** Texto com borda preta e preenchimento na cor do tema. */
+/** Texto com borda preta e preenchimento em gradiente nas cores do tema. */
 class OutlinedTextView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = android.R.attr.textViewStyle
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
 
-    private val fillColor = MaterialColors.getColor(
-        context, com.google.android.material.R.attr.colorPrimary, Color.WHITE
-    )
+    private val gradStart: Int
+    private val gradEnd: Int
+
+    init {
+        val (a, b) = ThemeManager.gradientColors(context)
+        gradStart = a
+        gradEnd = b
+    }
     private val strokePx = resources.displayMetrics.density * 4f
 
     override fun onDraw(canvas: Canvas) {
@@ -43,9 +49,17 @@ class OutlinedTextView @JvmOverloads constructor(
         p.color = Color.BLACK
         l.draw(canvas)
 
+        var textW = 0f
+        for (i in 0 until l.lineCount) textW = maxOf(textW, l.getLineWidth(i))
+        val oldShader = p.shader
         p.style = Paint.Style.FILL
-        p.color = fillColor
+        p.color = Color.WHITE
+        p.shader = LinearGradient(
+            0f, 0f, textW.coerceAtLeast(1f), 0f,
+            gradStart, gradEnd, Shader.TileMode.CLAMP
+        )
         l.draw(canvas)
+        p.shader = oldShader
         canvas.restore()
 
         p.color = oldColor

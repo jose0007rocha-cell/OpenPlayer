@@ -17,6 +17,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -30,6 +31,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.DefaultTimeBar
+import androidx.media3.ui.PlayerView
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.SubtitleView
 import com.example.openplayer.databinding.ActivityPlayerBinding
@@ -79,6 +81,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         setupGestures()
+        setupSubtitleButton()
 
         uri = intent?.data
         if (uri == null) finish()
@@ -254,6 +257,43 @@ class PlayerActivity : AppCompatActivity() {
         return p
     }
 
+    // ---------- Botão de legenda (ativa / desativa) ----------
+
+    @OptIn(UnstableApi::class)
+    private fun setupSubtitleButton() {
+        // Mantém o botão longe de recortes de tela (notch) e das bordas
+        ViewCompat.setOnApplyWindowInsetsListener(b.root) { _, insets ->
+            val cut = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+            val lp = b.btnSubs.layoutParams as android.widget.FrameLayout.LayoutParams
+            val d = resources.displayMetrics.density
+            lp.topMargin = cut.top + (12 * d).toInt()
+            lp.marginEnd = cut.right + (16 * d).toInt()
+            b.btnSubs.layoutParams = lp
+            insets
+        }
+        refreshSubtitleIcon()
+        b.btnSubs.setOnClickListener {
+            val on = !AppSettings.subtitlesOn(this)
+            AppSettings.setSubtitlesOn(this, on)
+            player?.let { applySubtitleTracks(it) }
+            refreshSubtitleIcon()
+            showIndicator(null, null, getString(if (on) R.string.subs_now_on else R.string.subs_now_off))
+        }
+        // O botão aparece e some junto com os controles do player
+        b.playerView.setControllerVisibilityListener(
+            PlayerView.ControllerVisibilityListener { visibility ->
+                b.btnSubs.visibility = if (visibility == View.VISIBLE) View.VISIBLE else View.GONE
+            }
+        )
+        b.btnSubs.visibility = if (b.playerView.isControllerFullyVisible) View.VISIBLE else View.GONE
+    }
+
+    private fun refreshSubtitleIcon() {
+        val on = AppSettings.subtitlesOn(this)
+        b.btnSubs.setImageResource(if (on) R.drawable.ic_subtitles else R.drawable.ic_subtitles_off)
+        b.btnSubs.imageAlpha = if (on) 255 else 150
+    }
+
     // ---------- Ícones e barra de progresso na cor do tema ----------
 
     @OptIn(UnstableApi::class)
@@ -271,6 +311,7 @@ class PlayerActivity : AppCompatActivity() {
         }
         b.indBar.progressTintList = ColorStateList.valueOf(accent)
         b.indIcon.setColorFilter(accent)
+        b.btnSubs.setColorFilter(accent)
     }
 
     private fun tint(v: View, color: Int) {
@@ -281,8 +322,7 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(UnstableApi::class)
-    private fun applySubtitleSettings(p: ExoPlayer) {
+    private fun applySubtitleTracks(p: ExoPlayer) {
         val enabled = AppSettings.subtitlesOn(this)
         val params = p.trackSelectionParameters.buildUpon()
             .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !enabled)
@@ -291,6 +331,11 @@ class PlayerActivity : AppCompatActivity() {
             params.setSelectUndeterminedTextLanguage(true)
         }
         p.trackSelectionParameters = params.build()
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun applySubtitleSettings(p: ExoPlayer) {
+        applySubtitleTracks(p)
 
         val sv = b.playerView.subtitleView ?: return
         sv.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * AppSettings.subSizeScale(this))

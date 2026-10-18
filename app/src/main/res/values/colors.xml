@@ -27,5 +27,27 @@
     <color name="accent_teal_on">#00201B</color>
     <color name="accent_teal_container">#00473D</color>
     <color name="accent_teal_on_container">#A0F2E4</color>
+    <color name="accent_sunset">#FF3D71</color>
+    <color name="accent_sunset_on">#FFFFFF</color>
+    <color name="accent_sunset_container">#6B0F2A</color>
+    <color name="accent_sunset_on_container">#FFD9E2</color>
+    <color name="accent_ocean">#00B0FF</color>
+    <color name="accent_ocean_on">#00212F</color>
+    <color name="accent_ocean_container">#004A6B</color>
+    <color name="accent_ocean_on_container">#C5EBFF</color>
+    <color name="accent_neon">#D500F9</color>
+    <color name="accent_neon_on">#FFFFFF</color>
+    <color name="accent_neon_container">#4A0A66</color>
+    <color name="accent_neon_on_container">#F6D6FF</color>
+    <color name="accent_blue_end">#00E5FF</color>
+    <color name="accent_green_end">#AEEA00</color>
+    <color name="accent_orange_end">#FFD600</color>
+    <color name="accent_pink_end">#FF80AB</color>
+    <color name="accent_purple_end">#E040FB</color>
+    <color name="accent_red_end">#FF9100</color>
+    <color name="accent_teal_end">#64FFDA</color>
+    <color name="accent_sunset_end">#FFB300</color>
+    <color name="accent_ocean_end">#1DE9B6</color>
+    <color name="accent_neon_end">#00E5FF</color>
     <color name="app_bg">#0B0B0E</color>
 </resources>

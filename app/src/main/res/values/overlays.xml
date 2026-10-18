@@ -55,6 +55,30 @@
         <item name="colorSecondaryContainer">@color/accent_teal_container</item>
         <item name="colorOnSecondaryContainer">@color/accent_teal_on_container</item>
     </style>
+    <style name="AccentSunset" parent="">
+        <item name="colorPrimary">@color/accent_sunset</item>
+        <item name="colorOnPrimary">@color/accent_sunset_on</item>
+        <item name="colorPrimaryContainer">@color/accent_sunset_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_sunset_on_container</item>
+        <item name="colorSecondaryContainer">@color/accent_sunset_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_sunset_on_container</item>
+    </style>
+    <style name="AccentOcean" parent="">
+        <item name="colorPrimary">@color/accent_ocean</item>
+        <item name="colorOnPrimary">@color/accent_ocean_on</item>
+        <item name="colorPrimaryContainer">@color/accent_ocean_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_ocean_on_container</item>
+        <item name="colorSecondaryContainer">@color/accent_ocean_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_ocean_on_container</item>
+    </style>
+    <style name="AccentNeon" parent="">
+        <item name="colorPrimary">@color/accent_neon</item>
+        <item name="colorOnPrimary">@color/accent_neon_on</item>
+        <item name="colorPrimaryContainer">@color/accent_neon_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_neon_on_container</item>
+        <item name="colorSecondaryContainer">@color/accent_neon_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_neon_on_container</item>
+    </style>
     <style name="OverlayAmoled" parent="">
         <item name="android:colorBackground">@android:color/black</item>
         <item name="android:windowBackground">@android:color/black</item>
