@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
@@ -128,20 +129,23 @@ object ThemeManager {
         blurKey = ""
     }
 
-    fun loadBackground(c: Context): Bitmap? {
+    /** Imagem salva, sem desfoque nem véu. */
+    fun loadRawBackground(c: Context): Bitmap? {
         if (!hasBackground(c)) return null
         val ver = prefs(c).getLong("bg_ver", 0L)
         val cachedBase = cacheBmp
-        val base: Bitmap = if (cachedBase != null && cacheVer == ver) {
-            cachedBase
-        } else {
-            val decoded = BitmapFactory.decodeFile(bgFile(c).absolutePath) ?: return null
-            cacheBmp = decoded
-            cacheVer = ver
-            blurCache = null
-            blurKey = ""
-            decoded
-        }
+        if (cachedBase != null && cacheVer == ver) return cachedBase
+        val decoded = BitmapFactory.decodeFile(bgFile(c).absolutePath) ?: return null
+        cacheBmp = decoded
+        cacheVer = ver
+        blurCache = null
+        blurKey = ""
+        return decoded
+    }
+
+    fun loadBackground(c: Context): Bitmap? {
+        val base = loadRawBackground(c) ?: return null
+        val ver = prefs(c).getLong("bg_ver", 0L)
         val level = getBlur(c)
         if (level <= 0) return base
         val key = "$ver|$level"
@@ -153,17 +157,28 @@ object ThemeManager {
         return out
     }
 
+    /** Prévia pequena (desfoque + véu) para a tela de edição, sem mexer no que já está aplicado. */
+    fun renderPreview(c: Context, src: Bitmap, dim: Int, blur: Int): Bitmap {
+        val base = if (blur > 0) makeBlurred(src, blur, src.width) else src
+        val out = base.copy(Bitmap.Config.ARGB_8888, true)
+        val veil = ColorUtils.setAlphaComponent(
+            if (isNight(c)) Color.BLACK else Color.WHITE,
+            dim * 255 / 100
+        )
+        Canvas(out).drawColor(veil)
+        return out
+    }
+
     /**
      * Desfoque suave: trabalha numa imagem reduzida (mais detalhe que antes) e o raio máximo
      * é bem menor, então o valor 100 deixa a imagem só levemente ofuscada, sem virar mancha.
      */
-    private fun makeBlurred(src: Bitmap, level: Int): Bitmap {
-        val sw = 540
+    private fun makeBlurred(src: Bitmap, level: Int, sw: Int = 540): Bitmap {
         val sh = (src.height * (sw.toFloat() / src.width)).toInt().coerceAtLeast(1)
         val small = Bitmap.createScaledBitmap(src, sw, sh, true)
         val px = IntArray(sw * sh)
         small.getPixels(px, 0, sw, 0, 0, sw, sh)
-        val radius = (level * 0.1f).roundToInt().coerceIn(1, 10)
+        val radius = (level * 0.1f * sw / 540f).roundToInt().coerceIn(1, 10)
         val tmp = IntArray(px.size)
         repeat(3) {
             blurPass(px, tmp, sw, sh, radius, true)
@@ -205,8 +220,8 @@ object ThemeManager {
         }
     }
 
-    /** Lê a imagem escolhida, corta no formato da tela e guarda dentro do app. */
-    fun saveBackground(c: Context, uri: Uri): Boolean {
+    /** Lê a imagem escolhida e corta no formato da tela. Ainda NÃO aplica nem guarda nada. */
+    fun prepareBackground(c: Context, uri: Uri): Bitmap? {
         return try {
             val dm = c.resources.displayMetrics
             val tw = minOf(dm.widthPixels, dm.heightPixels)
@@ -214,7 +229,7 @@ object ThemeManager {
 
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             c.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return false
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
             val shortSide = minOf(bounds.outWidth, bounds.outHeight)
             var sample = 1
@@ -223,7 +238,7 @@ object ThemeManager {
             val opts = BitmapFactory.Options().apply { inSampleSize = sample }
             var bmp = c.contentResolver.openInputStream(uri)?.use {
                 BitmapFactory.decodeStream(it, null, opts)
-            } ?: return false
+            } ?: return null
 
             val orientation = try {
                 c.contentResolver.openInputStream(uri)?.use {
@@ -253,10 +268,21 @@ object ThemeManager {
             )
             val result = Bitmap.createScaledBitmap(cropped, tw, th, true)
 
-            bgFile(c).outputStream().use { result.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+            result
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    /** Guarda a imagem escolhida junto com a intensidade e o desfoque, e passa a usá-la no app. */
+    fun commitBackground(c: Context, bmp: Bitmap, dim: Int, blur: Int): Boolean {
+        return try {
+            bgFile(c).outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) }
             prefs(c).edit()
                 .putBoolean("bg_on", true)
                 .putLong("bg_ver", System.currentTimeMillis())
+                .putInt("bg_dim", dim)
+                .putInt("bg_blur", blur)
                 .apply()
             cacheBmp = null
             cacheVer = -1L
