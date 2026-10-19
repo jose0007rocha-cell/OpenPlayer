@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#17181D" />
+        </shape>
+    </item>
+    <!-- cor 1: facho cinza-azulado vindo de cima (igual à abertura) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.5"
+                android:centerY="0.0"
+                android:endColor="#00000000"
+                android:gradientRadius="95%p"
+                android:startColor="#3A4152"
+                android:type="radial" />
+        </shape>
+    </item>
+    <!-- cor 2: azul-índigo profundo subindo de baixo -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.5"
+                android:centerY="1.0"
+                android:endColor="#00000000"
+                android:gradientRadius="85%p"
+                android:startColor="#2B2F6B"
+                android:type="radial" />
+        </shape>
+    </item>
+</layer-list>

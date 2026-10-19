@@ -49,5 +49,10 @@
     <color name="accent_sunset_end">#FFB300</color>
     <color name="accent_ocean_end">#1DE9B6</color>
     <color name="accent_neon_end">#00E5FF</color>
+    <color name="accent_base">#8DA2D0</color>
+    <color name="accent_base_on">#0F1626</color>
+    <color name="accent_base_container">#2A3350</color>
+    <color name="accent_base_on_container">#D8E2FF</color>
+    <color name="accent_base_end">#7B6FE0</color>
     <color name="app_bg">#0B0B0E</color>
 </resources>

@@ -40,6 +40,7 @@ object ThemeManager {
     class Accent(val id: String, val nameRes: Int, val styleRes: Int, val colorRes: Int, val endColorRes: Int)
 
     val accents = listOf(
+        Accent("base", R.string.accent_base, R.style.AccentBase, R.color.accent_base, R.color.accent_base_end),
         Accent("blue", R.string.accent_blue, R.style.AccentBlue, R.color.accent_blue, R.color.accent_blue_end),
         Accent("green", R.string.accent_green, R.style.AccentGreen, R.color.accent_green, R.color.accent_green_end),
         Accent("orange", R.string.accent_orange, R.style.AccentOrange, R.color.accent_orange, R.color.accent_orange_end),
@@ -59,7 +60,7 @@ object ThemeManager {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
     }
 
-    fun getAccentId(c: Context): String = prefs(c).getString("accent", "blue") ?: "blue"
+    fun getAccentId(c: Context): String = prefs(c).getString("accent", "base") ?: "base"
 
     fun setAccent(c: Context, id: String) {
         prefs(c).edit().putString("accent", id).apply()
@@ -358,6 +359,11 @@ object ThemeManager {
     /** Sem imagem: uma coloração leve do tema (gradiente suave) no fundo da tela. */
     private fun applyTint(a: Activity) {
         if (isAmoled(a)) return // AMOLED continua preto puro
+        if (getAccentId(a) == "base") {
+            // Tema base: mesmo fundo em gradiente da tela de abertura (cinza-azulado + índigo)
+            a.window.setBackgroundDrawable(ContextCompat.getDrawable(a, R.drawable.base_bg))
+            return
+        }
         val base = ContextCompat.getColor(a, R.color.app_bg)
         val (s, e) = gradientColors(a)
         val top = ColorUtils.blendARGB(base, s, 0.24f)

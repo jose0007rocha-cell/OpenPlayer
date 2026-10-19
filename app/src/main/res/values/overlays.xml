@@ -55,6 +55,14 @@
         <item name="colorSecondaryContainer">@color/accent_teal_container</item>
         <item name="colorOnSecondaryContainer">@color/accent_teal_on_container</item>
     </style>
+    <style name="AccentBase" parent="">
+        <item name="colorPrimary">@color/accent_base</item>
+        <item name="colorOnPrimary">@color/accent_base_on</item>
+        <item name="colorPrimaryContainer">@color/accent_base_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_base_on_container</item>
+        <item name="colorSecondaryContainer">@color/accent_base_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_base_on_container</item>
+    </style>
     <style name="AccentSunset" parent="">
         <item name="colorPrimary">@color/accent_sunset</item>
         <item name="colorOnPrimary">@color/accent_sunset_on</item>
