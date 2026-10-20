@@ -215,4 +215,12 @@
     <string name="accent_base">Base</string>
     <string name="bg_applied">Fundo aplicado</string>
     <string name="apply_bg">Aplicar fundo</string>
+    <string name="settings_about">Sobre o app</string>
+    <string name="about_title">Android.OpenPlayer</string>
+    <string name="about_author">Autor: Jose Rocha</string>
+    <string name="about_check">Verificar atualização</string>
+    <string name="about_checking">Verificando…</string>
+    <string name="about_update">Atualização disponível (v%1$s) – baixar</string>
+    <string name="about_uptodate">Você já está na versão mais recente.</string>
+    <string name="about_error">Não foi possível verificar agora. Confira a conexão.</string>
 </resources>

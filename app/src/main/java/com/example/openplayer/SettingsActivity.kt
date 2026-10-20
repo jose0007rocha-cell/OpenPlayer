@@ -40,6 +40,8 @@ class SettingsActivity : AppCompatActivity() {
                 refresh()
             }
         }
+        b.aboutName.text = "OpenPlayer V" + AboutDialog.installedVersion(this)
+        b.rowAbout.setOnClickListener { AboutDialog.show(this) }
         refresh()
     }
 
