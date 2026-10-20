@@ -14,6 +14,9 @@ android {
         versionCode = 11
         versionName = "2.0"
     }
+	buildFeatures {	
+		dataBinding = true
+		}
 
     signingConfigs {
         create("release") {
