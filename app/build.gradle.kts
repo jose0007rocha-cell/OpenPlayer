@@ -14,25 +14,36 @@ android {
         versionCode = 11
         versionName = "2.0"
     }
-	signingConfigs {
-    create("release") {
-        storeFile = file(System.getenv("KEYSTORE_PATH") ?: "Android.OpenPlayer.jks")
-        storePassword = System.getenv("KEYSTORE_PASSWORD")
-        keyAlias = System.getenv("KEY_ALIAS")
-        keyPassword = System.getenv("KEY_PASSWORD")
-    }
-}
-    buildTypes {
-    release {
-        signingConfig = signingConfigs.getByName("release")
-        isMinifyEnabled = false
-        proguardFiles(
-            getDefaultProguardFile("proguard-android-optimize.txt"),
-            "proguard-rules.pro"
-        )
-    }
-}
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "Android.OpenPlayer.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    compileOptions {
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
