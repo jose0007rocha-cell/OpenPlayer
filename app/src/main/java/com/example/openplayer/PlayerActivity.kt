@@ -163,7 +163,7 @@ class PlayerActivity : AppCompatActivity() {
             }
         })
 
-        b.playerView.setOnTouchListener { _, ev ->
+        b.playerView.setOnTouchListener { _, ev: MotionEvent ->
             detector.onTouchEvent(ev)
             when (ev.actionMasked) {
                 MotionEvent.ACTION_UP -> {
