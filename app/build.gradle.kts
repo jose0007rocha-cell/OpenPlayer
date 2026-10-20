@@ -43,7 +43,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-}
+} // <--- ESTA É A CHAVE QUE ESTAVA FALTANDO (fecha o android)
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
