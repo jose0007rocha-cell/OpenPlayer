@@ -61,6 +61,6 @@ class SplashActivity : Activity() {
     }
 
     private companion object {
-        const val SPLASH_MS = 1700L
+        const val SPLASH_MS = 2000L
     }
 }
