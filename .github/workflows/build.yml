@@ -24,7 +24,7 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/Android.OpenPlayer.jks
 
       - name: Build Release APK
-        working-directory: OpenPlayer.
+        working-directory: gradle.
         env:
           KEYSTORE_PATH: app/Android.OpenPlayer.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
