@@ -167,26 +167,26 @@ class FolderActivity : AppCompatActivity() {
     }
 
     private fun doDelete(video: Video) {
-        if (Build.VERSION.SDK_INT >= 30) {
-            try {
-                val pi = MediaStore.createDeleteRequest(contentResolver, listOf(video.uri))
-                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
+    if (Build.VERSION.SDK_INT >= 30) {
+        try {
+            val pi = MediaStore.createDeleteRequest(contentResolver, listOf(video.uri))
+            deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
+        }
+    } else {
+        try {
+            if (contentResolver.delete(video.uri, null, null) > 0) {
+                Toast.makeText(this, "Vídeo excluído", Toast.LENGTH_SHORT).show()
+                reloadVideos()
+            } else {
+                Toast.makeText(this, "Falha ao excluir", Toast.LENGTH_SHORT).show()
             }
-        } else {
-            try {
-                if (contentResolver.delete(video.uri, null, null) > 0) {
-                    Toast.makeText(this, "Vídeo excluído", Toast.LENGTH_SHORT).show()
-                    reloadVideos()
-                } else {
-                    Toast.makeText(this, "Falha ao excluir", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
-            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
         }
     }
+}
 
     // ---------- Exclusão em Massa (Selecionar Tudo) ----------
 
