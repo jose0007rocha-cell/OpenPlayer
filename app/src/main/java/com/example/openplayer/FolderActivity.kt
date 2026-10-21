@@ -9,11 +9,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.openplayer.databinding.ActivityFolderBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class FolderActivity : AppCompatActivity() {
 
@@ -109,32 +109,31 @@ class FolderActivity : AppCompatActivity() {
         dialog.window?.setLayout(largura, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
         dialog.window?.setGravity(android.view.Gravity.CENTER)
         
-        // Fundo escurecido (0.85 = bem escuro)
+        // Fundo escurecido
         dialog.window?.setDimAmount(0.85f) 
 
         view.findViewById<android.widget.TextView>(R.id.tvMenuTitle).text = video.name
 
-        view.findViewById<View>(R.id.optProperties).setOnClickListener {
-    val tamanho = android.text.format.Formatter.formatShortFileSize(this, video.sizeBytes)
-    val duracao = formatDuration(video.durationMs)
-    
-    androidx.appcompat.app.AlertDialog.Builder(this)
-        .setTitle("Propriedades")
-        .setMessage("Nome: ${video.name}\nTamanho: $tamanho\nDuração: $duracao\nPasta: ${video.folderName}")
-        .setPositiveButton("OK", null)
-        .show()
-        
-    dialog.dismiss()
-}
+        view.findViewById<View>(R.id.optShare).setOnClickListener {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "video/*"
+                putExtra(Intent.EXTRA_STREAM, video.uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(shareIntent, "Compartilhar vídeo"))
+            dialog.dismiss()
+        }
 
         view.findViewById<View>(R.id.optProperties).setOnClickListener {
             val tamanho = android.text.format.Formatter.formatShortFileSize(this, video.sizeBytes)
             val duracao = formatDuration(video.durationMs)
-            AlertDialog.Builder(this)
+            
+            MaterialAlertDialogBuilder(this)
                 .setTitle("Propriedades")
                 .setMessage("Nome: ${video.name}\nTamanho: $tamanho\nDuração: $duracao\nPasta: ${video.folderName}")
                 .setPositiveButton("OK", null)
                 .show()
+                
             dialog.dismiss()
         }
 
@@ -159,13 +158,13 @@ class FolderActivity : AppCompatActivity() {
     // ---------- Exclusão de Vídeo (Único) ----------
 
     private fun confirmarExclusao(video: Video) {
-    androidx.appcompat.app.AlertDialog.Builder(this)
-        .setTitle("Excluir vídeo")
-        .setMessage("Tem certeza que deseja excluir '${video.name}'?")
-        .setPositiveButton("Excluir") { _, _ -> doDelete(video) }
-        .setNegativeButton("Cancelar", null)
-        .show()
-}
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Excluir vídeo")
+            .setMessage("Tem certeza que deseja excluir '${video.name}'?")
+            .setPositiveButton("Excluir") { _, _ -> doDelete(video) }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
 
     private fun doDelete(video: Video) {
         if (Build.VERSION.SDK_INT >= 30) {
@@ -192,18 +191,18 @@ class FolderActivity : AppCompatActivity() {
     // ---------- Exclusão em Massa (Selecionar Tudo) ----------
 
     private fun confirmarExclusaoEmMassa() {
-    if (videos.isEmpty()) {
-        Toast.makeText(this, "Não há vídeos nesta pasta", Toast.LENGTH_SHORT).show()
-        return
-    }
+        if (videos.isEmpty()) {
+            Toast.makeText(this, "Não há vídeos nesta pasta", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-    androidx.appcompat.app.AlertDialog.Builder(this)
-        .setTitle("Excluir todos")
-        .setMessage("Tem certeza que deseja excluir os ${videos.size} vídeos desta pasta?")
-        .setPositiveButton("Excluir Tudo") { _, _ -> doDeleteEmMassa() }
-        .setNegativeButton("Cancelar", null)
-        .show()
-}
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Excluir todos")
+            .setMessage("Tem certeza que deseja excluir os ${videos.size} vídeos desta pasta?")
+            .setPositiveButton("Excluir Tudo") { _, _ -> doDeleteEmMassa() }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
 
     private fun doDeleteEmMassa() {
         val uris = videos.map { it.uri }
