@@ -118,10 +118,7 @@ class FolderActivity : AppCompatActivity() {
     val tamanho = android.text.format.Formatter.formatShortFileSize(this, video.sizeBytes)
     val duracao = formatDuration(video.durationMs)
     
-    com.google.android.material.dialog.MaterialAlertDialogBuilder(
-        this, 
-        com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Dark
-    )
+    androidx.appcompat.app.AlertDialog.Builder(this)
         .setTitle("Propriedades")
         .setMessage("Nome: ${video.name}\nTamanho: $tamanho\nDuração: $duracao\nPasta: ${video.folderName}")
         .setPositiveButton("OK", null)
@@ -162,10 +159,7 @@ class FolderActivity : AppCompatActivity() {
     // ---------- Exclusão de Vídeo (Único) ----------
 
     private fun confirmarExclusao(video: Video) {
-    com.google.android.material.dialog.MaterialAlertDialogBuilder(
-        this, 
-        com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Dark
-    )
+    androidx.appcompat.app.AlertDialog.Builder(this)
         .setTitle("Excluir vídeo")
         .setMessage("Tem certeza que deseja excluir '${video.name}'?")
         .setPositiveButton("Excluir") { _, _ -> doDelete(video) }
@@ -203,10 +197,7 @@ class FolderActivity : AppCompatActivity() {
         return
     }
 
-    com.google.android.material.dialog.MaterialAlertDialogBuilder(
-        this, 
-        com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Dark
-    )
+    androidx.appcompat.app.AlertDialog.Builder(this)
         .setTitle("Excluir todos")
         .setMessage("Tem certeza que deseja excluir os ${videos.size} vídeos desta pasta?")
         .setPositiveButton("Excluir Tudo") { _, _ -> doDeleteEmMassa() }
