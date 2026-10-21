@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="?attr/colorSurface">
+
+    <!-- Título com o nome do vídeo -->
+    <TextView
+        android:id="@+id/tvMenuTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nome do Vídeo"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginBottom="16dp"
+        android:textColor="?attr/colorOnSurface"/>
+
+    <!-- Opção: Compartilhar -->
+    <TextView
+        android:id="@+id/optShare"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Compartilhar"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:textSize="16sp"
+        android:textColor="?attr/colorOnSurface"/>
+
+    <!-- Opção: Propriedades -->
+    <TextView
+        android:id="@+id/optProperties"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Propriedades"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:textSize="16sp"
+        android:textColor="?attr/colorOnSurface"/>
+
+    <!-- Opção: Adicionar à lista de reprodução -->
+    <TextView
+        android:id="@+id/optPlaylist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Adicionar à lista de reprodução"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:textSize="16sp"
+        android:textColor="?attr/colorOnSurface"/>
+
+    <!-- Opção: Excluir (em vermelho para destaque) -->
+    <TextView
+        android:id="@+id/optDelete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Excluir"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:textSize="16sp"
+        android:textColor="#FF5252"/>
+
+</LinearLayout>

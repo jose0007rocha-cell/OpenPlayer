@@ -20,10 +20,18 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
-      - name: Build debug APK
-        run: gradle assembleDebug --stacktrace
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/Android.OpenPlayer.jks
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_PATH: Android.OpenPlayer.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle assembleRelease
 
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenPlayer-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: OpenPlayer-release
+          path: app/build/outputs/apk/release/*.apk
