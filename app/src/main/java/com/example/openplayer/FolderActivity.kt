@@ -104,35 +104,52 @@ class FolderActivity : AppCompatActivity() {
 
     dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
     
-    val largura = (resources.displayMetrics.widthPixels * 0.85).toInt()
+    val largura = (// Deixa o fundo do app bem escuro
+dialog.window?.setDimAmount(0.85f) 
+
     dialog.window?.setLayout(largura, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
     dialog.window?.setGravity(android.view.Gravity.CENTER)
     
-    // Deixa o fundo escurecido (mas sem aquele cinza forte, pois o blur já vai escurecer)
-    dialog.window?.setDimAmount(0.3f) 
-
-    // 👇 APLICA O EFEITO DE VIDRO (BLUR) NO FUNDO 👇
-    if (Build.VERSION.SDK_INT >= 31) {
-        val blurEffect = android.graphics.RenderEffect.createBlurEffect(20f, 20f, android.graphics.Shader.TileMode.CLAMP)
-        b.root.setRenderEffect(blurEffect)
-    }
-
-    // 👇 REMOVE O EFEITO DE VIDRO QUANDO O MENU FECHAR 👇
-    dialog.setOnDismissListener {
-        if (Build.VERSION.SDK_INT >= 31) {
-            b.root.setRenderEffect(null)
-        }
-    }
+    // Deixa o fundo do app escurecido para dar destaque ao menu (sem travar os cliques)
+    dialog.window?.setDimAmount(0.7f) 
 
     view.findViewById<android.widget.TextView>(R.id.tvMenuTitle).text = video.name
 
-    // ... (mantenha o resto dos cliques normais)
     view.findViewById<View>(R.id.optShare).setOnClickListener {
-        // ...
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "video/*"
+            putExtra(Intent.EXTRA_STREAM, video.uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(Intent.createChooser(shareIntent, "Compartilhar vídeo"))
+        dialog.dismiss()
+    }
+
+    view.findViewById<View>(R.id.optProperties).setOnClickListener {
+        val tamanho = android.text.format.Formatter.formatShortFileSize(this, video.sizeBytes)
+        val duracao = formatDuration(video.durationMs)
+        AlertDialog.Builder(this)
+            .setTitle("Propriedades")
+            .setMessage("Nome: ${video.name}\nTamanho: $tamanho\nDuração: $duracao\nPasta: ${video.folderName}")
+            .setPositiveButton("OK", null)
+            .show()
+        dialog.dismiss()
+    }
+
+    view.findViewById<View>(R.id.optPlaylist).setOnClickListener {
+        Toast.makeText(this, "Adicionar à playlist em breve", Toast.LENGTH_SHORT).show()
         dialog.dismiss()
     }
     
-    // ... (o restante do código igual)
+    view.findViewById<View>(R.id.optSelectAll).setOnClickListener {
+        confirmarExclusaoEmMassa()
+        dialog.dismiss()
+    }
+
+    view.findViewById<View>(R.id.optDelete).setOnClickListener {
+        confirmarExclusao(video)
+        dialog.dismiss()
+    }
 
     dialog.show()
 }
