@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.openplayer.databinding.ActivityFolderBinding
-import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class FolderActivity : AppCompatActivity() {
 
@@ -50,7 +49,7 @@ class FolderActivity : AppCompatActivity() {
         b.folderTitle.text = intent.getStringExtra(EXTRA_NAME) ?: ""
         b.btnBack.setOnClickListener { finish() }
 
-        // Inicializando o Adapter com os novos parâmetros
+        // Inicializando o Adapter
         adapter = VideoAdapter(
             onClick = { openVideo(it.uri) },
             onLongClick = { video -> 
@@ -95,14 +94,28 @@ class FolderActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    // ---------- Menu BottomSheet ----------
+    // ---------- Menu de Opções ----------
 
     private fun mostrarMenuOpcoes(video: Video) {
-        val bottomSheet = BottomSheetDialog(this)
+        // Usamos um Dialog normal para ele flutuar no centro com fundo escurecido
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
         val view = layoutInflater.inflate(R.layout.menu_video_options, null)
-        bottomSheet.setContentView(view)
+        dialog.setContentView(view)
 
-        view.findViewById<TextView>(R.id.tvMenuTitle).text = video.name
+        // Deixa o fundo do Dialog transparente para aparecer os cantos arredondados
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        
+        // Ajusta a largura do menu
+        dialog.window?.setLayout(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        
+        // Fundo escurecido semi-transparente
+        dialog.window?.setDimAmount(0.6f) 
+
+        view.findViewById<android.widget.TextView>(R.id.tvMenuTitle).text = video.name
 
         view.findViewById<View>(R.id.optShare).setOnClickListener {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -111,7 +124,7 @@ class FolderActivity : AppCompatActivity() {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             startActivity(Intent.createChooser(shareIntent, "Compartilhar vídeo"))
-            bottomSheet.dismiss()
+            dialog.dismiss()
         }
 
         view.findViewById<View>(R.id.optProperties).setOnClickListener {
@@ -122,23 +135,28 @@ class FolderActivity : AppCompatActivity() {
                 .setMessage("Nome: ${video.name}\nTamanho: $tamanho\nDuração: $duracao\nPasta: ${video.folderName}")
                 .setPositiveButton("OK", null)
                 .show()
-            bottomSheet.dismiss()
+            dialog.dismiss()
         }
 
         view.findViewById<View>(R.id.optPlaylist).setOnClickListener {
             Toast.makeText(this, "Adicionar à playlist em breve", Toast.LENGTH_SHORT).show()
-            bottomSheet.dismiss()
+            dialog.dismiss()
+        }
+        
+        view.findViewById<View>(R.id.optSelectAll).setOnClickListener {
+            confirmarExclusaoEmMassa()
+            dialog.dismiss()
         }
 
         view.findViewById<View>(R.id.optDelete).setOnClickListener {
             confirmarExclusao(video)
-            bottomSheet.dismiss()
+            dialog.dismiss()
         }
 
-        bottomSheet.show()
+        dialog.show()
     }
 
-    // ---------- Exclusão de Vídeo ----------
+    // ---------- Exclusão de Vídeo (Único) ----------
 
     private fun confirmarExclusao(video: Video) {
         AlertDialog.Builder(this)
@@ -165,6 +183,45 @@ class FolderActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this, "Falha ao excluir", Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: Exception) {
+                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // ---------- Exclusão em Massa (Selecionar Tudo) ----------
+
+    private fun confirmarExclusaoEmMassa() {
+        if (videos.isEmpty()) {
+            Toast.makeText(this, "Não há vídeos nesta pasta", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Excluir todos")
+            .setMessage("Tem certeza que deseja excluir os ${videos.size} vídeos desta pasta?")
+            .setPositiveButton("Excluir Tudo") { _, _ -> doDeleteEmMassa() }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun doDeleteEmMassa() {
+        val uris = videos.map { it.uri }
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                val pi = MediaStore.createDeleteRequest(contentResolver, uris)
+                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+            } catch (e: Exception) {
+                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            try {
+                var count = 0
+                for (uri in uris) {
+                    if (contentResolver.delete(uri, null, null) > 0) count++
+                }
+                Toast.makeText(this, "$count vídeos excluídos", Toast.LENGTH_SHORT).show()
+                reloadVideos()
             } catch (e: Exception) {
                 Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
             }
