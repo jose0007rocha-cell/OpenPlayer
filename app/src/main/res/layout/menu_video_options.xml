@@ -4,21 +4,19 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp"
-    android:layout_margin="24dp"
     android:background="@drawable/bg_menu_rounded">
 
-    <!-- Título com o nome do vídeo -->
     <TextView
         android:id="@+id/tvMenuTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Nome do Vídeo"
-        android:textSize="16sp"
+        android:textSize="18sp"
         android:textStyle="bold"
         android:maxLines="1"
         android:ellipsize="end"
         android:layout_marginBottom="16dp"
-        android:textColor="?attr/colorOnSurface"/>
+        android:textColor="#FFFFFF"/>
 
     <TextView
         android:id="@+id/optShare"
@@ -28,7 +26,7 @@
         android:padding="12dp"
         android:background="?attr/selectableItemBackground"
         android:textSize="16sp"
-        android:textColor="?attr/colorOnSurface"/>
+        android:textColor="#F0F0F0"/>
 
     <TextView
         android:id="@+id/optProperties"
@@ -38,7 +36,7 @@
         android:padding="12dp"
         android:background="?attr/selectableItemBackground"
         android:textSize="16sp"
-        android:textColor="?attr/colorOnSurface"/>
+        android:textColor="#F0F0F0"/>
 
     <TextView
         android:id="@+id/optPlaylist"
@@ -48,18 +46,18 @@
         android:padding="12dp"
         android:background="?attr/selectableItemBackground"
         android:textSize="16sp"
-        android:textColor="?attr/colorOnSurface"/>
-        
-   <TextView
-    android:id="@+id/optSelectAll"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Selecionar tudo"
-    android:padding="12dp"
-    android:background="?attr/selectableItemBackground"
-    android:textSize="16sp"
-    android:textColor="?attr/colorOnSurface"/>
-    
+        android:textColor="#F0F0F0"/>
+
+    <TextView
+        android:id="@+id/optSelectAll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Selecionar tudo"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:textSize="16sp"
+        android:textColor="#F0F0F0"/>
+
     <TextView
         android:id="@+id/optDelete"
         android:layout_width="match_parent"

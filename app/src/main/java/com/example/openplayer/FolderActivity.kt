@@ -104,16 +104,22 @@ class FolderActivity : AppCompatActivity() {
         dialog.setContentView(view)
 
         // Deixa o fundo do Dialog transparente para aparecer os cantos arredondados
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        
-        // Ajusta a largura do menu
-        dialog.window?.setLayout(
-            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        
-        // Fundo escurecido semi-transparente
-        dialog.window?.setDimAmount(0.6f) 
+        // Transforma o fundo do Dialog em transparente para aparecer os cantos do nosso XML
+dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+// Define a largura do menu (ex: 320dp ou 85% da tela) e centraliza
+val largura = (resources.displayMetrics.widthPixels * 0.85).toInt() // 85% da tela
+
+dialog.window?.setLayout(
+    largura,
+    android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+)
+
+// Define que a janela vai ficar no centro da tela
+dialog.window?.setGravity(android.view.Gravity.CENTER)
+
+// Fundo escurecido
+dialog.window?.setDimAmount(0.6f)
 
         view.findViewById<android.widget.TextView>(R.id.tvMenuTitle).text = video.name
 
