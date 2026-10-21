@@ -116,13 +116,14 @@ class FolderActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun openVideo(uri: Uri) {
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "video/*")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(intent)
+    private fun openVideo(uri: android.net.Uri) {
+    // Abre o vídeo direto no player do seu app (substitua PlayerActivity pelo nome da sua tela de player)
+    val intent = Intent(this, PlayerActivity::class.java).apply {
+        data = uri
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
+    startActivity(intent)
+}
 
     // ---------- Menu de Opções ----------
 
