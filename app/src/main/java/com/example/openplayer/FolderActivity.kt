@@ -169,22 +169,60 @@ class FolderActivity : AppCompatActivity() {
     private fun doDelete(video: Video) {
     if (Build.VERSION.SDK_INT >= 30) {
         try {
+            // Tenta o método moderno (MediaStore)
             val pi = MediaStore.createDeleteRequest(contentResolver, listOf(video.uri))
             deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
         } catch (e: Exception) {
-            Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
+            // PLANO B: Se o MediaStore falhar, apaga o arquivo físico direto!
+            try {
+                // Converte a URI em um caminho de arquivo real
+                val file = getFileFromUri(video.uri)
+                if (file != null && file.exists()) {
+                    if (file.delete()) {
+                        // Avisa a galeria que o arquivo sumiu
+                        contentResolver.delete(video.uri, null, null)
+                        Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
+                        reloadVideos()
+                    } else {
+                        Toast.makeText(this, "Falha ao apagar o arquivo", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, "Arquivo não encontrado", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e2: Exception) {
+                Toast.makeText(this, "Erro: ${e2.message}", Toast.LENGTH_LONG).show()
+            }
         }
     } else {
+        // Android 10 ou inferior
         try {
             if (contentResolver.delete(video.uri, null, null) > 0) {
-                Toast.makeText(this, "Vídeo excluído", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
                 reloadVideos()
             } else {
                 Toast.makeText(this, "Falha ao excluir", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
-            Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
+}
+
+// Função auxiliar para converter a URI em File real
+private fun getFileFromUri(uri: android.net.Uri): java.io.File? {
+    return try {
+        val projection = arrayOf(MediaStore.MediaColumns.DATA)
+        val cursor = contentResolver.query(uri, projection, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val columnIndex = it.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
+                val filePath = it.getString(columnIndex)
+                return java.io.File(filePath)
+            }
+        }
+        null
+    } catch (e: Exception) {
+        null
     }
 }
 
