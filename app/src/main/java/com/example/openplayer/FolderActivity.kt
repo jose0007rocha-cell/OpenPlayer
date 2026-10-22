@@ -190,7 +190,7 @@ class FolderActivity : AppCompatActivity() {
         b.headerNormal.visibility = if (sel) View.GONE else View.VISIBLE
         b.headerSelect.visibility = if (sel) View.VISIBLE else View.GONE
         val n = adapter.selectedItems.size
-        b.tvSelCount.text = resources.getQuantityString(R.plurals.selected_count, n, n)
+        b.tvSelCount.text = resources.getQuantityString(R.plurals.videos_selected_count, n, n)
         b.checkAll.visibility = if (sel) View.VISIBLE else View.GONE
         b.checkAll.isChecked = adapter.isAllSelected
         backCallback.isEnabled = sel

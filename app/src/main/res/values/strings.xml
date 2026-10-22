@@ -240,7 +240,7 @@
         <item quantity="one">%1$d VÍDEO  %2$s</item>
         <item quantity="other">%1$d VÍDEOS  %2$s</item>
     </plurals>
-    <plurals name="selected_count">
+    <plurals name="videos_selected_count">
         <item quantity="one">%d selecionado</item>
         <item quantity="other">%d selecionados</item>
     </plurals>
@@ -249,7 +249,7 @@
         <item quantity="other">Tem certeza que deseja excluir os %d vídeos selecionados?</item>
     </plurals>
     <string name="delete_selected_title">Excluir vídeos</string>
-    <string name="sel_close">Fechar seleção</string>
-    <string name="sel_delete">Excluir selecionados</string>
+    <string name="vsel_close">Fechar seleção</string>
+    <string name="vsel_delete">Excluir selecionados</string>
     <string name="sel_all">Selecionar todos</string>
 </resources>

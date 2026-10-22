@@ -69,7 +69,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/sel_close"
+                android:contentDescription="@string/vsel_close"
                 android:src="@drawable/ic_close"
                 android:tint="?attr/colorOnSurface" />
 
@@ -88,7 +88,7 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/sel_delete"
+                android:contentDescription="@string/vsel_delete"
                 android:src="@drawable/ic_delete"
                 android:tint="?attr/colorOnSurface" />
         </LinearLayout>
