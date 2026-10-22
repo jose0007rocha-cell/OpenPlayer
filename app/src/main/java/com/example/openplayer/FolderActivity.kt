@@ -10,7 +10,6 @@ import android.provider.Settings
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -55,16 +54,21 @@ class FolderActivity : AppCompatActivity() {
         }
         b.btnSort.setOnClickListener { showSortDialog() }
         applyLayout()
-
-        // Pede a permissão total se for Android 10+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            pedirPermissaoTotal()
-        }
     }
 
     override fun onResume() {
         super.onResume()
         reloadVideos()
+        
+        // Verifica se voltamos das configurações e temos uma exclusão pendente
+        if (videoPendenteExclusao != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                // Temos a permissão total agora! Apaga o vídeo que ficou pendente
+                val videoParaApagar = videoPendenteExclusao!!
+                videoPendenteExclusao = null
+                doDelete(videoParaApagar)
+            }
+        }
     }
 
     private fun reloadVideos() {
@@ -87,13 +91,15 @@ class FolderActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    // ---------- Permissão de Acesso Total (MANAGE_EXTERNAL_STORAGE) ----------
+    // ---------- Permissão de Acesso Total ----------
 
-    private fun pedirPermissaoTotal() {
-        if (!Environment.isExternalStorageManager()) {
+    private fun pedirPermissaoTotal(videoPendente: Video? = null) {
+        videoPendenteExclusao = videoPendente
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             MaterialAlertDialogBuilder(this)
                 .setTitle("Permissão Necessária")
-                .setMessage("Para excluir vídeos do Cartão SD sem ficar pedindo toda hora, o app precisa de acesso total aos arquivos. Deseja ativar?")
+                .setMessage("Para excluir vídeos do Cartão SD, o app precisa de acesso total aos arquivos. Deseja ativar agora?")
                 .setPositiveButton("Ativar") { _, _ ->
                     try {
                         val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
@@ -107,7 +113,40 @@ class FolderActivity : AppCompatActivity() {
                 }
                 .setNegativeButton("Cancelar", null)
                 .show()
+        } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+            // Android 10 ainda precisa usar o SAF (tela de escolher pasta)
+            pedirPermissaoSDCard(videoPendente)
+        } else {
+            Toast.makeText(this, "Erro: Sem permissão para excluir", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private val sdCardLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val treeUri = result.data?.data
+            if (treeUri != null) {
+                contentResolver.takePersistableUriPermission(
+                    treeUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+                if (videoPendenteExclusao != null) {
+                    doDelete(videoPendenteExclusao!!)
+                    videoPendenteExclusao = null
+                }
+            }
+        }
+    }
+
+    private fun pedirPermissaoSDCard(video: Video?) {
+        videoPendenteExclusao = video
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            putExtra("android.content.extra.SHOW_ADVANCED", true)
+            putExtra("android.content.extra.FANCY", true)
+            putExtra("android.content.extra.SHOW_FILESIZE", true)
+        }
+        sdCardLauncher.launch(intent)
     }
 
     // ---------- Menu de Opções ----------
@@ -178,18 +217,16 @@ class FolderActivity : AppCompatActivity() {
 
     private fun doDelete(video: Video) {
         try {
-            // 1. Tenta apagar pelo arquivo físico (funciona se tiver permissão total)
             val file = getFileFromUri(video.uri)
             if (file != null && file.exists()) {
                 if (file.delete()) {
-                    contentResolver.delete(video.uri, null, null) // Limpa a galeria
+                    contentResolver.delete(video.uri, null, null)
                     Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
                     reloadVideos()
                     return
                 }
             }
             
-            // 2. Se o arquivo for em nuvem ou não for físico, tenta pelo ContentResolver
             val deleted = contentResolver.delete(video.uri, null, null)
             if (deleted > 0) {
                 Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
@@ -197,12 +234,11 @@ class FolderActivity : AppCompatActivity() {
                 return
             }
             
-            // 3. Se chegou aqui, não tem permissão total
-            pedirPermissaoTotal()
+            // Se falhou, pede a permissão (passando o vídeo para tentar de novo depois)
+            pedirPermissaoTotal(video)
 
         } catch (e: SecurityException) {
-            // Segurança do Android bloqueou
-            pedirPermissaoTotal()
+            pedirPermissaoTotal(video)
         } catch (e: Exception) {
             Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
         }
@@ -236,21 +272,17 @@ class FolderActivity : AppCompatActivity() {
                     contentResolver.delete(video.uri, null, null)
                     count++
                 }
-            } catch (e: Exception) {
-                // Ignora falhas individuais e continua
-            }
+            } catch (e: Exception) { }
         }
         
         if (count > 0) {
             Toast.makeText(this, "$count vídeos excluídos!", Toast.LENGTH_SHORT).show()
             reloadVideos()
         } else {
-            Toast.makeText(this, "Nenhum vídeo pôde ser excluído. Ative o acesso total.", Toast.LENGTH_LONG).show()
-            pedirPermissaoTotal()
+            pedirPermissaoTotal(null)
         }
     }
 
-    // Função auxiliar para converter a URI em File real
     private fun getFileFromUri(uri: Uri): java.io.File? {
         return try {
             val projection = arrayOf(MediaStore.MediaColumns.DATA)
