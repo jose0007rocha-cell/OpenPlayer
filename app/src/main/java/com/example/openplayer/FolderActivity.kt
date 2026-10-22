@@ -3,9 +3,11 @@ package com.example.openplayer
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.format.Formatter
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,6 +26,13 @@ class FolderActivity : AppCompatActivity() {
     private var folderId = 0L
     private var videos: List<Video> = emptyList()
 
+    // Fecha o modo de seleção antes de sair da tela
+    private val backCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            adapter.clearSelection()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
@@ -39,9 +48,17 @@ class FolderActivity : AppCompatActivity() {
         adapter = VideoAdapter(
             onClick = { openVideo(it.uri) },
             onLongClick = { },
-            onMoreOptionsClick = { video, _ -> mostrarMenuOpcoes(video) }
+            onMoreOptionsClick = { video, _ -> mostrarMenuOpcoes(video) },
+            onSelectionChanged = { updateSelectionUi() }
         )
         b.list.adapter = adapter
+        onBackPressedDispatcher.addCallback(this, backCallback)
+
+        b.btnSelClose.setOnClickListener { adapter.clearSelection() }
+        b.btnSelDelete.setOnClickListener { confirmarExclusaoSelecionados() }
+        b.checkAll.setOnClickListener {
+            if (adapter.isAllSelected) adapter.clearSelection() else adapter.selectAll()
+        }
 
         b.btnView.setOnClickListener {
             AppSettings.setGridView(this, !AppSettings.gridView(this))
@@ -119,7 +136,7 @@ class FolderActivity : AppCompatActivity() {
         }
         
         view.findViewById<View>(R.id.optSelectAll).setOnClickListener {
-            confirmarExclusaoEmMassa()
+            adapter.selectAll()
             dialog.dismiss()
         }
 
@@ -143,7 +160,8 @@ class FolderActivity : AppCompatActivity() {
             cancelled -> {}
             else -> Toast.makeText(this, R.string.delete_fail, Toast.LENGTH_LONG).show()
         }
-        reloadVideos()
+        // Se cancelou, mantém a seleção como estava
+        if (!(cancelled && deleted == 0)) reloadVideos()
     }
 
     private fun confirmarExclusao(video: Video) {
@@ -155,18 +173,31 @@ class FolderActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun confirmarExclusaoEmMassa() {
-        if (videos.isEmpty()) {
-            Toast.makeText(this, "Não há vídeos nesta pasta", Toast.LENGTH_SHORT).show()
-            return
-        }
-
+    private fun confirmarExclusaoSelecionados() {
+        val selecionados = adapter.selectedVideos()
+        if (selecionados.isEmpty()) return
         MaterialAlertDialogBuilder(this)
-            .setTitle("Excluir todos")
-            .setMessage("Tem certeza que deseja excluir os ${videos.size} vídeos desta pasta?")
-            .setPositiveButton("Excluir Tudo") { _, _ -> deleter.delete(videos.map { it.uri }) }
+            .setTitle(R.string.delete_selected_title)
+            .setMessage(resources.getQuantityString(R.plurals.delete_selected_msg, selecionados.size, selecionados.size))
+            .setPositiveButton("Excluir") { _, _ -> deleter.delete(selecionados.map { it.uri }) }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    /** Troca a barra de cima pela barra de seleção ("N selecionados" + lixeira) e atualiza o resumo. */
+    private fun updateSelectionUi() {
+        val sel = adapter.isSelectionMode
+        b.headerNormal.visibility = if (sel) View.GONE else View.VISIBLE
+        b.headerSelect.visibility = if (sel) View.VISIBLE else View.GONE
+        val n = adapter.selectedItems.size
+        b.tvSelCount.text = resources.getQuantityString(R.plurals.selected_count, n, n)
+        b.checkAll.visibility = if (sel) View.VISIBLE else View.GONE
+        b.checkAll.isChecked = adapter.isAllSelected
+        backCallback.isEnabled = sel
+        val total = videos.sumOf { it.sizeBytes }
+        b.tvSummary.text = resources.getQuantityString(
+            R.plurals.videos_count, videos.size, videos.size, Formatter.formatShortFileSize(this, total)
+        )
     }
 
     // ---------- Layout e Ordenação ----------

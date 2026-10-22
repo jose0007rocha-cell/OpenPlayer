@@ -236,4 +236,20 @@
     <string name="btn_start">Começar</string>
     <string name="btn_allow">Liberar</string>
     <string name="btn_not_now">Agora não</string>
+    <plurals name="videos_count">
+        <item quantity="one">%1$d VÍDEO  %2$s</item>
+        <item quantity="other">%1$d VÍDEOS  %2$s</item>
+    </plurals>
+    <plurals name="selected_count">
+        <item quantity="one">%d selecionado</item>
+        <item quantity="other">%d selecionados</item>
+    </plurals>
+    <plurals name="delete_selected_msg">
+        <item quantity="one">Tem certeza que deseja excluir o vídeo selecionado?</item>
+        <item quantity="other">Tem certeza que deseja excluir os %d vídeos selecionados?</item>
+    </plurals>
+    <string name="delete_selected_title">Excluir vídeos</string>
+    <string name="sel_close">Fechar seleção</string>
+    <string name="sel_delete">Excluir selecionados</string>
+    <string name="sel_all">Selecionar todos</string>
 </resources>

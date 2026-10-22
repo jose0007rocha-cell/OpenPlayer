@@ -15,32 +15,56 @@ import java.util.Locale
 class VideoAdapter(
     private val onClick: (Video) -> Unit,
     private val onLongClick: (Video) -> Unit = {},
-    private val onMoreOptionsClick: (Video, View) -> Unit = { _, _ -> }
+    private val onMoreOptionsClick: (Video, View) -> Unit = { _, _ -> },
+    private val onSelectionChanged: () -> Unit = {}
 ) : RecyclerView.Adapter<VideoAdapter.Holder>() {
 
     private var items: List<Video> = emptyList()
     var grid = false
 
-    // Controle de seleção (caso você queira usar na FolderActivity no futuro)
+    // Modo de seleção (toque longo num vídeo liga; marcar vários e excluir de uma vez)
     var isSelectionMode = false
         private set
     val selectedItems = mutableSetOf<Video>()
+
+    val isAllSelected: Boolean
+        get() = items.isNotEmpty() && selectedItems.size == items.size
+
+    fun selectedVideos(): List<Video> = items.filter { it in selectedItems }
 
     fun submit(list: List<Video>) {
         items = list
         selectedItems.clear()
         isSelectionMode = false
         notifyDataSetChanged()
+        onSelectionChanged()
     }
 
     fun toggleSelection(video: Video) {
-        if (selectedItems.contains(video)) {
-            selectedItems.remove(video)
+        val wasMode = isSelectionMode
+        if (!selectedItems.remove(video)) selectedItems.add(video)
+        isSelectionMode = selectedItems.isNotEmpty()
+        if (wasMode != isSelectionMode) {
+            notifyDataSetChanged() // entrou/saiu do modo: todos mudam (caixinhas aparecem/somem)
         } else {
-            selectedItems.add(video)
+            val idx = items.indexOf(video)
+            if (idx >= 0) notifyItemChanged(idx)
         }
+        onSelectionChanged()
+    }
+
+    fun selectAll() {
+        selectedItems.addAll(items)
         isSelectionMode = selectedItems.isNotEmpty()
         notifyDataSetChanged()
+        onSelectionChanged()
+    }
+
+    fun clearSelection() {
+        selectedItems.clear()
+        isSelectionMode = false
+        notifyDataSetChanged()
+        onSelectionChanged()
     }
 
     class Holder(v: View) : RecyclerView.ViewHolder(v) {
@@ -98,6 +122,9 @@ class VideoAdapter(
             }
             true
         }
+
+        // No modo de seleção a caixinha ocupa o lugar dos 3 pontinhos
+        holder.btnMoreOptions?.visibility = if (isSelectionMode) View.GONE else View.VISIBLE
 
         // Botão de 3 pontinhos (se existir no layout)
         holder.btnMoreOptions?.setOnClickListener { view ->
