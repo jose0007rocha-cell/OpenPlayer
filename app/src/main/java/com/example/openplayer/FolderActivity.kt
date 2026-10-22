@@ -4,9 +4,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
-import android.provider.Settings
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -29,38 +28,37 @@ class FolderActivity : AppCompatActivity() {
     private lateinit var adapter: VideoAdapter
     private var folderId = 0L
     private var videos: List<Video> = emptyList()
-    
-    // Lista de vídeos que vamos apagar de uma vez
-    private var urisParaExcluir: List<Uri> = emptyList()
-    private var isExclusaoEmMassa = false
+    private var videoPendenteExclusao: Video? = null
 
-    // Launcher oficial do Android para exclusão de mídia
+    // Launcher para pedir acesso à pasta raiz do SD Card (Estilo XPlayer)
+    private val sdCardLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val treeUri = result.data?.data
+            if (treeUri != null) {
+                contentResolver.takePersistableUriPermission(
+                    treeUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+                Toast.makeText(this, "Acesso concedido! Excluindo...", Toast.LENGTH_SHORT).show()
+                
+                if (videoPendenteExclusao != null) {
+                    doDeleteComTreeUri(videoPendenteExclusao!!)
+                    videoPendenteExclusao = null
+                }
+            }
+        }
+    }
+
+    // Launcher para exclusão nativa no Android 11+
     private val deleteLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            // O usuário permitiu a exclusão
-            if (isExclusaoEmMassa) {
-                // No Android 11+, se ele permitiu no sistema, o arquivo já foi apagado
-                Toast.makeText(this, "Vídeos excluídos!", Toast.LENGTH_SHORT).show()
-                reloadVideos()
-            } else {
-                // Para arquivo único, precisamos avisar o MediaStore
-                try {
-                    for (uri in urisParaExcluir) {
-                        contentResolver.delete(uri, null, null)
-                    }
-                    Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
-                    reloadVideos()
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Erro ao atualizar galeria", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } else {
-            Toast.makeText(this, "Exclusão cancelada.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Excluído!", Toast.LENGTH_SHORT).show()
+            reloadVideos()
         }
-        urisParaExcluir = emptyList()
-        isExclusaoEmMassa = false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -176,13 +174,67 @@ class FolderActivity : AppCompatActivity() {
         MaterialAlertDialogBuilder(this)
             .setTitle("Excluir vídeo")
             .setMessage("Tem certeza que deseja excluir '${video.name}'?")
-            .setPositiveButton("Excluir") { _, _ -> 
-                isExclusaoEmMassa = false
-                urisParaExcluir = listOf(video.uri)
-                executarExclusaoMediaStore() 
-            }
+            .setPositiveButton("Excluir") { _, _ -> doDelete(video) }
             .setNegativeButton("Cancelar", null)
             .show()
+    }
+
+    private fun doDelete(video: Video) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+: usa a API nativa de exclusão
+            try {
+                val pi = MediaStore.createDeleteRequest(contentResolver, listOf(video.uri))
+                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
+            } catch (e: Exception) {
+                Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            // Android 10: Tenta apagar usando a permissão do SD, se não tiver, pede!
+            val apagou = tentarApagarAndroid10(video)
+            if (!apagou) {
+                videoPendenteExclusao = video
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                    putExtra("android.content.extra.SHOW_ADVANCED", true)
+                }
+                sdCardLauncher.launch(intent)
+            }
+        }
+    }
+
+    private fun tentarApagarAndroid10(video: Video): Boolean {
+        try {
+            // Tenta 1: Apagar usando caminho absoluto (caso seja memória interna)
+            val file = getFileFromUri(video.uri)
+            if (file != null && file.exists()) {
+                if (file.delete()) {
+                    contentResolver.delete(video.uri, null, null)
+                    Toast.makeText(this, "Excluído!", Toast.LENGTH_SHORT).show()
+                    reloadVideos()
+                    return true
+                }
+            }
+
+            // Tenta 2: Apagar usando a permissão de árvore do SD (DocumentsContract)
+            val apagou = DocumentsContract.deleteDocument(contentResolver, video.uri)
+            if (apagou) {
+                Toast.makeText(this, "Excluído!", Toast.LENGTH_SHORT).show()
+                reloadVideos()
+                return true
+            }
+            
+            return false
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    private fun doDeleteComTreeUri(video: Video) {
+        val sucesso = tentarApagarAndroid10(video)
+        if (sucesso) {
+            Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Falha ao excluir. Tente novamente.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     // ---------- Exclusão em Massa ----------
@@ -196,44 +248,59 @@ class FolderActivity : AppCompatActivity() {
         MaterialAlertDialogBuilder(this)
             .setTitle("Excluir todos")
             .setMessage("Tem certeza que deseja excluir os ${videos.size} vídeos desta pasta?")
-            .setPositiveButton("Excluir Tudo") { _, _ -> 
-                isExclusaoEmMassa = true
-                urisParaExcluir = videos.map { it.uri }
-                executarExclusaoMediaStore()
-            }
+            .setPositiveButton("Excluir Tudo") { _, _ -> doDeleteEmMassa() }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    // ---------- A Mágica da Exclusão Oficial ----------
-
-    private fun executarExclusaoMediaStore() {
-        if (urisParaExcluir.isEmpty()) return
-
+    private fun doDeleteEmMassa() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ usa o pedido de exclusão em lote do sistema
             try {
-                val pi = MediaStore.createDeleteRequest(contentResolver, urisParaExcluir)
+                val uris = videos.map { it.uri }
+                val pi = MediaStore.createDeleteRequest(contentResolver, uris)
                 deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
             } catch (e: Exception) {
                 Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
             }
         } else {
-            // Android 10 ou inferior usa exclusão direta
             var count = 0
-            for (uri in urisParaExcluir) {
-                try {
-                    if (contentResolver.delete(uri, null, null) > 0) count++
-                } catch (e: Exception) {
-                    // Ignora falhas
+            var precisaPermissao = false
+            for (video in videos) {
+                if (tentarApagarAndroid10(video)) {
+                    count++
+                } else {
+                    precisaPermissao = true
+                    videoPendenteExclusao = video
+                    break
                 }
             }
             if (count > 0) {
                 Toast.makeText(this, "$count vídeos excluídos!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Não foi possível excluir.", Toast.LENGTH_SHORT).show()
+                reloadVideos()
             }
-            reloadVideos()
+            if (precisaPermissao) {
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                    putExtra("android.content.extra.SHOW_ADVANCED", true)
+                }
+                sdCardLauncher.launch(intent)
+            }
+        }
+    }
+
+    // Função auxiliar
+    private fun getFileFromUri(uri: Uri): java.io.File? {
+        return try {
+            val projection = arrayOf(MediaStore.MediaColumns.DATA)
+            val cursor = contentResolver.query(uri, projection, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val columnIndex = it.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
+                    return java.io.File(it.getString(columnIndex))
+                }
+            }
+            null
+        } catch (e: Exception) {
+            null
         }
     }
 
