@@ -1,19 +1,16 @@
 package com.example.openplayer
 
 import android.content.Intent
-import android.os.Build
+import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.openplayer.databinding.ActivityFolderBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class FolderActivity : AppCompatActivity() {
 
@@ -27,16 +24,6 @@ class FolderActivity : AppCompatActivity() {
     private var folderId = 0L
     private var videos: List<Video> = emptyList()
 
-    // Launcher para exclusão nativa (Android 11+)
-    private val deleteLauncher = registerForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            Toast.makeText(this, "Vídeo excluído", Toast.LENGTH_SHORT).show()
-            reloadVideos()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
@@ -49,15 +36,10 @@ class FolderActivity : AppCompatActivity() {
         b.folderTitle.text = intent.getStringExtra(EXTRA_NAME) ?: ""
         b.btnBack.setOnClickListener { finish() }
 
-        // Inicializando o Adapter
         adapter = VideoAdapter(
             onClick = { openVideo(it.uri) },
-            onLongClick = { video -> 
-                // Se quiser ativar a barra de seleção no futuro, coloque aqui.
-            },
-            onMoreOptionsClick = { video, _ -> 
-                mostrarMenuOpcoes(video) 
-            }
+            onLongClick = { },
+            onMoreOptionsClick = { video, _ -> mostrarMenuOpcoes(video) }
         )
         b.list.adapter = adapter
 
@@ -86,9 +68,9 @@ class FolderActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun openVideo(uri: android.net.Uri) {
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "video/*")
+    private fun openVideo(uri: Uri) {
+        val intent = Intent(this, PlayerActivity::class.java).apply {
+            data = uri
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         startActivity(intent)
@@ -97,97 +79,81 @@ class FolderActivity : AppCompatActivity() {
     // ---------- Menu de Opções ----------
 
     private fun mostrarMenuOpcoes(video: Video) {
-    val dialog = android.app.Dialog(this)
-    dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
-    val view = layoutInflater.inflate(R.layout.menu_video_options, null)
-    dialog.setContentView(view)
+        val dialog = android.app.Dialog(this)
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE)
+        val view = layoutInflater.inflate(R.layout.menu_video_options, null)
+        dialog.setContentView(view)
 
-    dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-    
-    val largura = (// Deixa o fundo do app bem escuro
-dialog.window?.setDimAmount(0.85f) 
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        val largura = (resources.displayMetrics.widthPixels * 0.85).toInt()
+        dialog.window?.setLayout(largura, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.window?.setGravity(android.view.Gravity.CENTER)
+        dialog.window?.setDimAmount(0.85f)
 
-    dialog.window?.setLayout(largura, android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
-    dialog.window?.setGravity(android.view.Gravity.CENTER)
-    
-    // Deixa o fundo do app escurecido para dar destaque ao menu (sem travar os cliques)
-    dialog.window?.setDimAmount(0.7f) 
+        view.findViewById<TextView>(R.id.tvMenuTitle).text = video.name
 
-    view.findViewById<android.widget.TextView>(R.id.tvMenuTitle).text = video.name
-
-    view.findViewById<View>(R.id.optShare).setOnClickListener {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "video/*"
-            putExtra(Intent.EXTRA_STREAM, video.uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        view.findViewById<View>(R.id.optShare).setOnClickListener {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "video/*"
+                putExtra(Intent.EXTRA_STREAM, video.uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(shareIntent, "Compartilhar vídeo"))
+            dialog.dismiss()
         }
-        startActivity(Intent.createChooser(shareIntent, "Compartilhar vídeo"))
-        dialog.dismiss()
+
+        view.findViewById<View>(R.id.optProperties).setOnClickListener {
+            val tamanho = android.text.format.Formatter.formatShortFileSize(this, video.sizeBytes)
+            val duracao = formatDuration(video.durationMs)
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Propriedades")
+                .setMessage("Nome: ${video.name}\nTamanho: $tamanho\nDuração: $duracao\nPasta: ${video.folderName}")
+                .setPositiveButton("OK", null)
+                .show()
+            dialog.dismiss()
+        }
+
+        view.findViewById<View>(R.id.optPlaylist).setOnClickListener {
+            Toast.makeText(this, "Adicionar à playlist em breve", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+        
+        view.findViewById<View>(R.id.optSelectAll).setOnClickListener {
+            confirmarExclusaoEmMassa()
+            dialog.dismiss()
+        }
+
+        view.findViewById<View>(R.id.optDelete).setOnClickListener {
+            confirmarExclusao(video)
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
-    view.findViewById<View>(R.id.optProperties).setOnClickListener {
-        val tamanho = android.text.format.Formatter.formatShortFileSize(this, video.sizeBytes)
-        val duracao = formatDuration(video.durationMs)
-        AlertDialog.Builder(this)
-            .setTitle("Propriedades")
-            .setMessage("Nome: ${video.name}\nTamanho: $tamanho\nDuração: $duracao\nPasta: ${video.folderName}")
-            .setPositiveButton("OK", null)
-            .show()
-        dialog.dismiss()
-    }
+    // ---------- Exclusão ----------
 
-    view.findViewById<View>(R.id.optPlaylist).setOnClickListener {
-        Toast.makeText(this, "Adicionar à playlist em breve", Toast.LENGTH_SHORT).show()
-        dialog.dismiss()
+    private val deleter = DeleteHelper(this) { deleted, failed, cancelled ->
+        when {
+            deleted > 0 -> {
+                val msg = resources.getQuantityString(R.plurals.videos_deleted, deleted, deleted)
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+                if (failed > 0) Toast.makeText(this, R.string.delete_fail, Toast.LENGTH_LONG).show()
+            }
+            cancelled -> {}
+            else -> Toast.makeText(this, R.string.delete_fail, Toast.LENGTH_LONG).show()
+        }
+        reloadVideos()
     }
-    
-    view.findViewById<View>(R.id.optSelectAll).setOnClickListener {
-        confirmarExclusaoEmMassa()
-        dialog.dismiss()
-    }
-
-    view.findViewById<View>(R.id.optDelete).setOnClickListener {
-        confirmarExclusao(video)
-        dialog.dismiss()
-    }
-
-    dialog.show()
-}
-
-    // ---------- Exclusão de Vídeo (Único) ----------
 
     private fun confirmarExclusao(video: Video) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Excluir vídeo")
             .setMessage("Tem certeza que deseja excluir '${video.name}'?")
-            .setPositiveButton("Excluir") { _, _ -> doDelete(video) }
+            .setPositiveButton("Excluir") { _, _ -> deleter.delete(listOf(video.uri)) }
             .setNegativeButton("Cancelar", null)
             .show()
     }
-
-    private fun doDelete(video: Video) {
-        if (Build.VERSION.SDK_INT >= 30) {
-            try {
-                val pi = MediaStore.createDeleteRequest(contentResolver, listOf(video.uri))
-                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            try {
-                if (contentResolver.delete(video.uri, null, null) > 0) {
-                    Toast.makeText(this, "Vídeo excluído", Toast.LENGTH_SHORT).show()
-                    reloadVideos()
-                } else {
-                    Toast.makeText(this, "Falha ao excluir", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    // ---------- Exclusão em Massa (Selecionar Tudo) ----------
 
     private fun confirmarExclusaoEmMassa() {
         if (videos.isEmpty()) {
@@ -195,35 +161,12 @@ dialog.window?.setDimAmount(0.85f)
             return
         }
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Excluir todos")
             .setMessage("Tem certeza que deseja excluir os ${videos.size} vídeos desta pasta?")
-            .setPositiveButton("Excluir Tudo") { _, _ -> doDeleteEmMassa() }
+            .setPositiveButton("Excluir Tudo") { _, _ -> deleter.delete(videos.map { it.uri }) }
             .setNegativeButton("Cancelar", null)
             .show()
-    }
-
-    private fun doDeleteEmMassa() {
-        val uris = videos.map { it.uri }
-        if (Build.VERSION.SDK_INT >= 30) {
-            try {
-                val pi = MediaStore.createDeleteRequest(contentResolver, uris)
-                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            try {
-                var count = 0
-                for (uri in uris) {
-                    if (contentResolver.delete(uri, null, null) > 0) count++
-                }
-                Toast.makeText(this, "$count vídeos excluídos", Toast.LENGTH_SHORT).show()
-                reloadVideos()
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro ao excluir", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
     // ---------- Layout e Ordenação ----------

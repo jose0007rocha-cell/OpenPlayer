@@ -5,12 +5,10 @@ import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -27,17 +25,27 @@ class MainActivity : AppCompatActivity() {
     private var allVideos: List<Video> = emptyList()
     private var menuOpen = false
 
-    private val permLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { load() }
+    private var permDeniedForever = false
 
-    private val deleteLauncher =
-        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { r ->
-            if (r.resultCode == RESULT_OK) {
-                Toast.makeText(this, R.string.deleted, Toast.LENGTH_SHORT).show()
-                exitSelection()
-                load()
-            }
+    private val permLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            // Negou e o Android não vai mais perguntar: só resta liberar nas configurações do app
+            permDeniedForever = !granted && !shouldShowRequestPermissionRationale(VideoRepository.permission)
+            load()
         }
+
+    private val deleter = DeleteHelper(this) { deleted, failed, cancelled ->
+        when {
+            deleted > 0 -> {
+                Toast.makeText(this, R.string.deleted, Toast.LENGTH_SHORT).show()
+                if (failed > 0) Toast.makeText(this, R.string.delete_fail, Toast.LENGTH_LONG).show()
+            }
+            cancelled -> {}
+            else -> Toast.makeText(this, R.string.delete_fail, Toast.LENGTH_LONG).show()
+        }
+        if (!cancelled) exitSelection()
+        load()
+    }
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
@@ -51,7 +59,16 @@ class MainActivity : AppCompatActivity() {
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
     fun requestPermission() {
-        permLauncher.launch(VideoRepository.permission)
+        if (permDeniedForever) {
+            startActivity(
+                Intent(
+                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.fromParts("package", packageName, null)
+                )
+            )
+        } else {
+            permLauncher.launch(VideoRepository.permission)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -197,26 +214,7 @@ class MainActivity : AppCompatActivity() {
             exitSelection()
             return
         }
-        if (Build.VERSION.SDK_INT >= 30) {
-            try {
-                val pi = MediaStore.createDeleteRequest(contentResolver, uris)
-                deleteLauncher.launch(IntentSenderRequest.Builder(pi.intentSender).build())
-            } catch (_: Exception) {
-                Toast.makeText(this, R.string.delete_fail, Toast.LENGTH_LONG).show()
-            }
-        } else {
-            var fail = 0
-            for (u in uris) {
-                try {
-                    if (contentResolver.delete(u, null, null) <= 0) fail++
-                } catch (_: Exception) {
-                    fail++
-                }
-            }
-            if (fail > 0) Toast.makeText(this, R.string.delete_fail, Toast.LENGTH_LONG).show()
-            exitSelection()
-            load()
-        }
+        deleter.delete(uris)
     }
 
     // ---------- Lista de pastas ----------

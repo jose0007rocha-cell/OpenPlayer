@@ -161,6 +161,11 @@
 
     <string name="delete_fail">Não foi possível excluir alguns vídeos.</string>
 
+    <plurals name="videos_deleted">
+        <item quantity="one">%d vídeo excluído.</item>
+        <item quantity="other">%d vídeos excluídos.</item>
+    </plurals>
+
     <plurals name="delete_message">
         <item quantity="one">Apagar %d pasta e todos os vídeos dentro dela? Isso não pode ser desfeito.</item>
         <item quantity="other">Apagar %d pastas e todos os vídeos dentro delas? Isso não pode ser desfeito.</item>

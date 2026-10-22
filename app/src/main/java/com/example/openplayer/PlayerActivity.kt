@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.provider.Settings
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -24,6 +25,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -34,6 +36,7 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.ui.CaptionStyleCompat
 import com.example.openplayer.databinding.ActivityPlayerBinding
 import com.google.android.material.color.MaterialColors
+import java.io.File
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -59,6 +62,7 @@ class PlayerActivity : AppCompatActivity() {
     private var startVolume = 0f
     private var seekStartPos = 0L
     private var seekTarget = 0L
+    private var keepPlaying = true // lembra se estava tocando ou pausado ao sair da tela
 
     private val hideIndicator = Runnable { b.indicator.visibility = View.GONE }
 
@@ -144,7 +148,11 @@ class PlayerActivity : AppCompatActivity() {
                     MODE_VOLUME -> {
                         val v = (startVolume - totalY / (h * 0.8f)).coerceIn(0f, 1f)
                         val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                        audio.setStreamVolume(AudioManager.STREAM_MUSIC, (v * max).roundToInt(), 0)
+                        try {
+                            audio.setStreamVolume(AudioManager.STREAM_MUSIC, (v * max).roundToInt(), 0)
+                        } catch (_: SecurityException) {
+                            // alguns aparelhos (modo não perturbe) bloqueiam a mudança de volume
+                        }
                         showIndicator(R.drawable.ic_volume, (v * 100).roundToInt(), "${(v * 100).roundToInt()}%")
                     }
                     MODE_SEEK -> {
@@ -216,29 +224,83 @@ class PlayerActivity : AppCompatActivity() {
 
     // ---------- Reprodução ----------
 
+    @OptIn(UnstableApi::class)
     override fun onStart() {
         super.onStart()
         val u = uri ?: return
+        if (player != null) return
         val p = buildPlayer()
         p.addListener(object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 Toast.makeText(this@PlayerActivity, R.string.playback_error, Toast.LENGTH_LONG).show()
+                // Arquivo apagado/movido ou sem permissão: não adianta ficar na tela preta
+                if (error.errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND ||
+                    error.errorCode == PlaybackException.ERROR_CODE_IO_NO_PERMISSION
+                ) finish()
             }
         })
         b.playerView.player = p
-        p.setMediaItem(MediaItem.fromUri(u))
+        val item = MediaItem.Builder()
+            .setUri(u)
+            .setSubtitleConfigurations(findSubtitles(u))
+            .build()
         val saved = prefs.getLong(u.toString(), 0L)
-        if (saved > 0) p.seekTo(saved)
+        p.setMediaItem(item, if (saved > 0) saved else C.TIME_UNSET)
         applySubtitleSettings(p)
         p.prepare()
-        p.playWhenReady = true
+        p.playWhenReady = keepPlaying
         player = p
+    }
+
+    @OptIn(UnstableApi::class)
+    /** Procura legendas ao lado do vídeo (filme.srt, filme.pt.srt, .vtt, .ass...). */
+    private fun findSubtitles(u: Uri): List<MediaItem.SubtitleConfiguration> {
+        val result = ArrayList<MediaItem.SubtitleConfiguration>()
+        try {
+            val path = if (u.scheme == "file") u.path else queryPath(u)
+            if (path.isNullOrEmpty()) return result
+            val video = File(path)
+            val dir = video.parentFile ?: return result
+            val base = video.nameWithoutExtension
+            val files = dir.listFiles() ?: return result
+            for (f in files.sortedBy { it.name }) {
+                if (!f.isFile) continue
+                val mime = when (f.extension.lowercase()) {
+                    "srt" -> MimeTypes.APPLICATION_SUBRIP
+                    "vtt" -> MimeTypes.TEXT_VTT
+                    "ass", "ssa" -> MimeTypes.TEXT_SSA
+                    else -> continue
+                }
+                val name = f.nameWithoutExtension
+                if (!name.startsWith(base, ignoreCase = true)) continue
+                val rest = name.substring(base.length)
+                if (rest.isNotEmpty() && rest[0] !in ".-_ ") continue
+                val lang = rest.trim('.', '-', '_', ' ').takeIf { it.length in 2..3 }
+                result.add(
+                    MediaItem.SubtitleConfiguration.Builder(Uri.fromFile(f))
+                        .setMimeType(mime)
+                        .setLanguage(lang)
+                        .setSelectionFlags(if (result.isEmpty()) C.SELECTION_FLAG_DEFAULT else 0)
+                        .build()
+                )
+            }
+        } catch (_: Exception) {
+        }
+        return result
+    }
+
+    private fun queryPath(u: Uri): String? = try {
+        contentResolver.query(u, arrayOf(MediaStore.MediaColumns.DATA), null, null, null)?.use {
+            if (it.moveToFirst()) it.getString(0) else null
+        }
+    } catch (_: Exception) {
+        null
     }
 
     @OptIn(UnstableApi::class)
     private fun buildPlayer(): ExoPlayer {
         val renderers = DefaultRenderersFactory(this)
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
             .setEnableDecoderFallback(true)
         val p = ExoPlayer.Builder(this, renderers)
             .setHandleAudioBecomingNoisy(true)
@@ -325,6 +387,7 @@ class PlayerActivity : AppCompatActivity() {
         super.onStop()
         val p = player
         val u = uri
+        if (p != null) keepPlaying = p.playWhenReady
         if (p != null && u != null) {
             val dur = p.duration
             val pos = p.currentPosition
