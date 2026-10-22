@@ -2,9 +2,11 @@ package com.example.openplayer
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.DocumentsContract
+import android.os.Environment
 import android.provider.MediaStore
+import android.provider.Settings
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -27,30 +29,6 @@ class FolderActivity : AppCompatActivity() {
     private var folderId = 0L
     private var videos: List<Video> = emptyList()
     private var videoPendenteExclusao: Video? = null
-
-    // Launcher para pedir acesso à pasta raiz do SD Card (Estilo XPlayer)
-    private val sdCardLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val treeUri = result.data?.data
-            if (treeUri != null) {
-                // Salva a permissão permanente
-                contentResolver.takePersistableUriPermission(
-                    treeUri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                )
-                
-                // Tenta executar a exclusão pendente agora que temos a permissão
-                if (videoPendenteExclusao != null) {
-                    doDelete(videoPendenteExclusao!!)
-                    videoPendenteExclusao = null
-                } else {
-                    doDeleteEmMassa()
-                }
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeManager.apply(this)
@@ -77,6 +55,11 @@ class FolderActivity : AppCompatActivity() {
         }
         b.btnSort.setOnClickListener { showSortDialog() }
         applyLayout()
+
+        // Pede a permissão total se for Android 10+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            pedirPermissaoTotal()
+        }
     }
 
     override fun onResume() {
@@ -97,20 +80,33 @@ class FolderActivity : AppCompatActivity() {
     }
 
     private fun openVideo(uri: Uri) {
-        // Tenta abrir o player interno (substitua PlayerActivity pelo nome real)
-        try {
-            val intent = Intent(this, Class.forName("com.example.openplayer.PlayerActivity")).apply {
-                data = uri
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            // Se o PlayerActivity não existir, usa o player padrão do Android
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "video/*")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            startActivity(intent)
+        val intent = Intent(this, PlayerActivity::class.java).apply {
+            data = uri
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(intent)
+    }
+
+    // ---------- Permissão de Acesso Total (MANAGE_EXTERNAL_STORAGE) ----------
+
+    private fun pedirPermissaoTotal() {
+        if (!Environment.isExternalStorageManager()) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Permissão Necessária")
+                .setMessage("Para excluir vídeos do Cartão SD sem ficar pedindo toda hora, o app precisa de acesso total aos arquivos. Deseja ativar?")
+                .setPositiveButton("Ativar") { _, _ ->
+                    try {
+                        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                        intent.addCategory("android.intent.category.DEFAULT")
+                        intent.data = Uri.parse("package:$packageName")
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                        startActivity(intent)
+                    }
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
         }
     }
 
@@ -181,44 +177,35 @@ class FolderActivity : AppCompatActivity() {
     }
 
     private fun doDelete(video: Video) {
-        // 1. Tenta apagar direto (funciona se for memória interna ou se já tiver permissão salva)
         try {
-            val deleted = DocumentsContract.deleteDocument(contentResolver, video.uri)
-            if (deleted) {
-                Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
-                reloadVideos()
-                return
-            }
-        } catch (e: SecurityException) {
-            // Não tem permissão ainda, pede a permissão do SD
-            pedirPermissaoSDCard(video)
-            return
-        } catch (e: Exception) {
-            // Tenta método alternativo (File)
-            try {
-                val file = getFileFromUri(video.uri)
-                if (file != null && file.exists() && file.delete()) {
+            // 1. Tenta apagar pelo arquivo físico (funciona se tiver permissão total)
+            val file = getFileFromUri(video.uri)
+            if (file != null && file.exists()) {
+                if (file.delete()) {
+                    contentResolver.delete(video.uri, null, null) // Limpa a galeria
                     Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
                     reloadVideos()
                     return
                 }
-            } catch (e2: Exception) {
-                // Ignora e pede a permissão
             }
-        }
+            
+            // 2. Se o arquivo for em nuvem ou não for físico, tenta pelo ContentResolver
+            val deleted = contentResolver.delete(video.uri, null, null)
+            if (deleted > 0) {
+                Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
+                reloadVideos()
+                return
+            }
+            
+            // 3. Se chegou aqui, não tem permissão total
+            pedirPermissaoTotal()
 
-        // Se chegou aqui, não conseguiu de jeito nenhum. Pede a permissão.
-        pedirPermissaoSDCard(video)
-    }
-
-    private fun pedirPermissaoSDCard(video: Video?) {
-        videoPendenteExclusao = video
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-            putExtra("android.content.extra.SHOW_ADVANCED", true)
-            putExtra("android.content.extra.FANCY", true)
-            putExtra("android.content.extra.SHOW_FILESIZE", true)
+        } catch (e: SecurityException) {
+            // Segurança do Android bloqueou
+            pedirPermissaoTotal()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
         }
-        sdCardLauncher.launch(intent)
     }
 
     // ---------- Exclusão em Massa ----------
@@ -239,48 +226,31 @@ class FolderActivity : AppCompatActivity() {
 
     private fun doDeleteEmMassa() {
         var count = 0
-        var precisouPermissao = false
-        var videoQueFalhou: Video? = null
-        
         for (video in videos) {
             try {
-                var apagou = false
-                try {
-                    apagou = DocumentsContract.deleteDocument(contentResolver, video.uri)
-                } catch (e: Exception) {
-                    val file = getFileFromUri(video.uri)
-                    if (file != null && file.exists()) {
-                        apagou = file.delete()
-                    }
-                }
-                
-                if (apagou) {
+                val file = getFileFromUri(video.uri)
+                if (file != null && file.exists() && file.delete()) {
+                    contentResolver.delete(video.uri, null, null)
                     count++
                 } else {
-                    precisouPermissao = true
-                    videoQueFalhou = video
-                    break
+                    contentResolver.delete(video.uri, null, null)
+                    count++
                 }
             } catch (e: Exception) {
-                precisouPermissao = true
-                videoQueFalhou = video
-                break
+                // Ignora falhas individuais e continua
             }
         }
         
         if (count > 0) {
             Toast.makeText(this, "$count vídeos excluídos!", Toast.LENGTH_SHORT).show()
             reloadVideos()
-        }
-        
-        if (precisouPermissao) {
-            pedirPermissaoSDCard(videoQueFalhou)
-        } else if (count == 0) {
-            Toast.makeText(this, "Nenhum vídeo pôde ser excluído", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Nenhum vídeo pôde ser excluído. Ative o acesso total.", Toast.LENGTH_LONG).show()
+            pedirPermissaoTotal()
         }
     }
 
-    // Função auxiliar
+    // Função auxiliar para converter a URI em File real
     private fun getFileFromUri(uri: Uri): java.io.File? {
         return try {
             val projection = arrayOf(MediaStore.MediaColumns.DATA)
