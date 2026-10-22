@@ -228,4 +228,12 @@
     <string name="about_update">Atualização disponível (v%1$s) – baixar</string>
     <string name="about_uptodate">Você já está na versão mais recente.</string>
     <string name="about_error">Não foi possível verificar agora. Confira a conexão.</string>
+    <string name="del_sd_title">Autorizar o cartão SD</string>
+    <string name="del_sd_msg">Para excluir vídeos do cartão SD sem pedir confirmação a cada vídeo, escolha o diretório de raiz do cartão SD externo (%1$s) para dar autorização.\n\n1. Toque em ⋮ e escolha “Mostrar cartão SD”\n2. Abra o menu ☰ e selecione o cartão SD\n3. Toque em “Permitir acesso ao cartão SD”\n\nIsso é feito só uma vez.</string>
+    <string name="del_sd_wrong">Escolha a raiz do cartão SD (%1$s), não uma pasta dentro dele.</string>
+    <string name="del_all_title">Excluir sem janelas de confirmação</string>
+    <string name="del_all_msg">Para excluir vídeos (inclusive vários de uma vez) sem a tela de confirmação do sistema a cada exclusão, ative “Permitir acesso para gerenciar todos os arquivos” para o OpenPlayer.\n\nIsso é feito só uma vez.</string>
+    <string name="btn_start">Começar</string>
+    <string name="btn_allow">Liberar</string>
+    <string name="btn_not_now">Agora não</string>
 </resources>
