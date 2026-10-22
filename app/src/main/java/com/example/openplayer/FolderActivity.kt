@@ -198,31 +198,48 @@ class FolderActivity : AppCompatActivity() {
     }
 
     private fun doDelete(video: Video) {
-        try {
-            // Tenta apagar direto (memória interna ou SD já autorizado)
+    try {
+        // Se for um arquivo do sistema (content://), usamos o método seguro
+        if (video.uri.scheme == "content") {
+            // Tenta apagar o documento (funciona se já tivermos a permissão do SD)
+            val deleted = android.provider.DocumentsContract.deleteDocument(contentResolver, video.uri)
+            if (deleted) {
+                Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
+                reloadVideos()
+                return
+            }
+        } else {
+            // Se for um arquivo normal, tenta apagar pelo caminho
             val file = getFileFromUri(video.uri)
-            if (file != null && file.exists()) {
-                if (file.delete()) {
-                    contentResolver.delete(video.uri, null, null) // Limpa a galeria
-                    Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
-                    reloadVideos()
-                    return
-                }
+            if (file != null && file.exists() && file.delete()) {
+                Toast.makeText(this, "Vídeo excluído!", Toast.LENGTH_SHORT).show()
+                reloadVideos()
+                return
             }
-            
-            // Se não conseguiu apagar, é porque falta permissão no SD. Pede ao usuário.
-            videoPendenteExclusao = video
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                putExtra("android.content.extra.SHOW_ADVANCED", true)
-                putExtra("android.content.extra.FANCY", true)
-                putExtra("android.content.extra.SHOW_FILESIZE", true)
-            }
-            sdCardLauncher.launch(intent)
-
-        } catch (e: Exception) {
-            Toast.makeText(this, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    } catch (e: SecurityException) {
+        // Caiu aqui porque não tem permissão no SD. Vamos pedir!
+        pedirPermissaoSDCard(video)
+        return
+    } catch (e: Exception) {
+        // Outros erros, tenta pedir a permissão também
+        pedirPermissaoSDCard(video)
+        return
     }
+
+    // Se chegou aqui, não conseguiu apagar por algum motivo
+    pedirPermissaoSDCard(video)
+}
+
+private fun pedirPermissaoSDCard(video: Video?) {
+    videoPendenteExclusao = video
+    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+        putExtra("android.content.extra.SHOW_ADVANCED", true)
+        putExtra("android.content.extra.FANCY", true)
+        putExtra("android.content.extra.SHOW_FILESIZE", true)
+    }
+    sdCardLauncher.launch(intent)
+}
 
     // ---------- Exclusão em Massa (Selecionar Tudo) ----------
 
@@ -241,44 +258,47 @@ class FolderActivity : AppCompatActivity() {
     }
 
     private fun doDeleteEmMassa() {
-        var count = 0
-        var precisouPermissao = false
-        
-        for (video in videos) {
-            try {
+    var count = 0
+    var precisouPermissao = false
+    var videoQueFalhou: Video? = null
+    
+    for (video in videos) {
+        try {
+            var apagou = false
+            if (video.uri.scheme == "content") {
+                apagou = android.provider.DocumentsContract.deleteDocument(contentResolver, video.uri)
+            } else {
                 val file = getFileFromUri(video.uri)
-                if (file != null && file.exists() && file.delete()) {
-                    contentResolver.delete(video.uri, null, null)
-                    count++
-                } else {
-                    precisouPermissao = true
-                    videoPendenteExclusao = video // Salva o primeiro que falhou
-                    break // Para o loop para pedir a permissão
+                if (file != null && file.exists()) {
+                    apagou = file.delete()
                 }
-            } catch (e: Exception) {
+            }
+            
+            if (apagou) {
+                count++
+            } else {
                 precisouPermissao = true
-                videoPendenteExclusao = video
-                break
+                videoQueFalhou = video
+                break // Para o loop para pedir a permissão
             }
-        }
-        
-        if (count > 0) {
-            Toast.makeText(this, "$count vídeos excluídos!", Toast.LENGTH_SHORT).show()
-            reloadVideos()
-        }
-        
-        if (precisouPermissao) {
-            // Abre a tela de permissão do SD Card
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                putExtra("android.content.extra.SHOW_ADVANCED", true)
-                putExtra("android.content.extra.FANCY", true)
-                putExtra("android.content.extra.SHOW_FILESIZE", true)
-            }
-            sdCardLauncher.launch(intent)
-        } else if (count == 0) {
-            Toast.makeText(this, "Nenhum vídeo pôde ser excluído", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            precisouPermissao = true
+            videoQueFalhou = video
+            break
         }
     }
+    
+    if (count > 0) {
+        Toast.makeText(this, "$count vídeos excluídos!", Toast.LENGTH_SHORT).show()
+        reloadVideos()
+    }
+    
+    if (precisouPermissao) {
+        pedirPermissaoSDCard(videoQueFalhou)
+    } else if (count == 0) {
+        Toast.makeText(this, "Nenhum vídeo pôde ser excluído", Toast.LENGTH_SHORT).show()
+    }
+}
 
     // Função auxiliar para converter a URI em File real
     private fun getFileFromUri(uri: Uri): java.io.File? {
