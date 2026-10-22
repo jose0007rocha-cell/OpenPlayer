@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.example.openplayer"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 29
         versionCode = 11
         versionName = "2.0"
     }
