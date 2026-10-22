@@ -43,7 +43,7 @@
                 android:alpha="0.7"
                 android:textSize="13sp" />
 
-            <com.example.openplayer.GradientTextView
+            <com.josercha.openplayer.GradientTextView
                 android:id="@+id/hiddenTag"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

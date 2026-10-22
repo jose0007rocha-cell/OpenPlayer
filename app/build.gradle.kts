@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.openplayer"
+    namespace = "com.josercha.openplayer"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.openplayer"
+        applicationId = "com.josercha.openplayer"
         minSdk = 24
         targetSdk = 29
-        versionCode = 14
-        versionName = "2.3"
+        versionCode = 15
+        versionName = "2.4"
     }
     
     buildFeatures {	

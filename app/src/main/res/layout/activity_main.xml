@@ -23,7 +23,7 @@
                     android:paddingStart="20dp"
                     android:paddingEnd="8dp">
 
-                    <com.example.openplayer.OutlinedTextView
+                    <com.josercha.openplayer.OutlinedTextView
                         android:id="@+id/appTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
