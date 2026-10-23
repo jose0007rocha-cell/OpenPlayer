@@ -5,18 +5,33 @@ plugins {
 
 android {
     namespace = "com.josercha.openplayer"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.josercha.openplayer"
         minSdk = 24
-        targetSdk = 29
-        versionCode = 15
-        versionName = "2.4"
+        targetSdk = 36
+        versionCode = 16
+        versionName = "2.5"
     }
     
-    buildFeatures {	
+    buildFeatures {
         dataBinding = true
+        buildConfig = true
+    }
+
+    // Dois sabores: "github" (APK direto, exclusão sem janelas com acesso a todos os arquivos)
+    // e "play" (segue as regras da Google Play: sem MANAGE_EXTERNAL_STORAGE).
+    flavorDimensions += "dist"
+    productFlavors {
+        create("github") {
+            dimension = "dist"
+            buildConfigField("boolean", "FULL_STORAGE_ACCESS", "true")
+        }
+        create("play") {
+            dimension = "dist"
+            buildConfigField("boolean", "FULL_STORAGE_ACCESS", "false")
+        }
     }
 
     signingConfigs {
@@ -51,11 +66,9 @@ android {
         jvmTarget = "1.8"
     }
 
-    // 👇 ADICIONADO: Ignora o erro do Google Play e permite compilar com targetSdk 29
     lint {
+        // O lint não roda dentro do assembleRelease; rode "gradle lint" quando quiser auditar.
         checkReleaseBuilds = false
-        abortOnError = false
-        disable += "ExpiredTargetSdkVersion"
     }
 } // Fecha o bloco android
 

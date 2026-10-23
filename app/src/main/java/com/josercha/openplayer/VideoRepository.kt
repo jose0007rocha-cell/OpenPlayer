@@ -10,12 +10,27 @@ import androidx.core.content.ContextCompat
 
 object VideoRepository {
 
-    val permission: String =
-        if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_VIDEO
-        else Manifest.permission.READ_EXTERNAL_STORAGE
+    /** Permissões pedidas ao usuário, por versão do Android. */
+    val permissions: Array<String> = when {
+        // Android 14+: o pedido precisa incluir a permissão de acesso parcial
+        Build.VERSION.SDK_INT >= 34 -> arrayOf(
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+        )
+        Build.VERSION.SDK_INT >= 33 -> arrayOf(Manifest.permission.READ_MEDIA_VIDEO)
+        else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+    }
 
+    /** Permissão principal (usada para saber se o Android ainda vai perguntar). */
+    val permission: String = permissions[0]
+
+    private fun granted(c: Context, p: String) =
+        ContextCompat.checkSelfPermission(c, p) == PackageManager.PERMISSION_GRANTED
+
+    /** Acesso total aos vídeos ou, no Android 14+, acesso parcial aos vídeos escolhidos. */
     fun hasPermission(c: Context): Boolean =
-        ContextCompat.checkSelfPermission(c, permission) == PackageManager.PERMISSION_GRANTED
+        granted(c, permission) ||
+            (Build.VERSION.SDK_INT >= 34 && granted(c, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED))
 
     @Suppress("DEPRECATION")
     fun load(c: Context): List<Video> {

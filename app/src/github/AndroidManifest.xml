@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Só no sabor "github" (APK fora da Google Play): permite excluir vídeos sem janela de confirmação. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
+    <application
+        android:preserveLegacyExternalStorage="true"
+        android:requestLegacyExternalStorage="true"
+        tools:targetApi="q" />
+</manifest>

@@ -28,9 +28,10 @@ class MainActivity : AppCompatActivity() {
     private var permDeniedForever = false
 
     private val permLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             // Negou e o Android não vai mais perguntar: só resta liberar nas configurações do app
-            permDeniedForever = !granted && !shouldShowRequestPermissionRationale(VideoRepository.permission)
+            permDeniedForever = !VideoRepository.hasPermission(this) &&
+                !shouldShowRequestPermissionRationale(VideoRepository.permission)
             load()
         }
 
@@ -67,7 +68,7 @@ class MainActivity : AppCompatActivity() {
                 )
             )
         } else {
-            permLauncher.launch(VideoRepository.permission)
+            permLauncher.launch(VideoRepository.permissions)
         }
     }
 

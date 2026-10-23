@@ -142,7 +142,9 @@ class DeleteHelper(
     // ---------- Android 10 e anteriores ----------
 
     private fun nextLegacy() {
-        if (!hasWritePermission() && !triedWrite) {
+        // Sem armazenamento legado (sabor "play"), a permissão de escrita não vale no Android 10
+        val writeHelps = BuildConfig.FULL_STORAGE_ACCESS || Build.VERSION.SDK_INT <= 28
+        if (writeHelps && !hasWritePermission() && !triedWrite) {
             triedWrite = true
             writePerm.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             return
@@ -320,7 +322,10 @@ class DeleteHelper(
 
     private fun nextApi30() {
         if (Build.VERSION.SDK_INT < 30) return
-        if (Environment.isExternalStorageManager() || prefs.getBoolean("asked_all_files", false)) {
+        if (!BuildConfig.FULL_STORAGE_ACCESS ||
+            Environment.isExternalStorageManager() ||
+            prefs.getBoolean("asked_all_files", false)
+        ) {
             systemDelete(pending)
             return
         }
