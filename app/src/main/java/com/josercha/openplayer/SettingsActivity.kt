@@ -22,6 +22,10 @@ class SettingsActivity : AppCompatActivity() {
         b.switchSubs.isChecked = AppSettings.subtitlesOn(this)
         b.switchSubs.setOnCheckedChangeListener { _, on -> AppSettings.setSubtitlesOn(this, on) }
 
+        ThemeManager.styleSwitch(this, b.switchBgPlay)
+        b.switchBgPlay.isChecked = AppSettings.backgroundPlay(this)
+        b.switchBgPlay.setOnCheckedChangeListener { _, on -> AppSettings.setBackgroundPlay(this, on) }
+
         b.rowRotation.setOnClickListener {
             choose(R.string.settings_rotation, R.array.rotation_options, AppSettings.rotation(this)) {
                 AppSettings.setRotation(this, it)

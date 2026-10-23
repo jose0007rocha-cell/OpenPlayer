@@ -1,6 +1,8 @@
 package com.josercha.openplayer
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
@@ -12,6 +14,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,6 +29,22 @@ class MainActivity : AppCompatActivity() {
     private var menuOpen = false
 
     private var permDeniedForever = false
+
+    private val notifLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    /** Android 13+: pede uma única vez a permissão para mostrar a notificação de mídia. */
+    private fun askNotificationPermissionOnce() {
+        if (Build.VERSION.SDK_INT < 33) return
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        if (prefs.getBoolean("notif_asked", false)) return
+        val granted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (granted) return
+        prefs.edit().putBoolean("notif_asked", true).apply()
+        notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     private val permLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -232,6 +251,7 @@ class MainActivity : AppCompatActivity() {
             showEmpty(getString(R.string.need_permission), true)
             return
         }
+        askNotificationPermissionOnce()
         val ctx = applicationContext
         Thread {
             val videos = VideoRepository.load(ctx)

@@ -252,4 +252,6 @@
     <string name="vsel_close">Fechar seleção</string>
     <string name="vsel_delete">Excluir selecionados</string>
     <string name="sel_all">Selecionar todos</string>
+    <string name="settings_bg_play">Continuar tocando em segundo plano</string>
+    <string name="playback_channel">Reprodução</string>
 </resources>

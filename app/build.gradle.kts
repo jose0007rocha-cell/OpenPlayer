@@ -11,8 +11,8 @@ android {
         applicationId = "com.josercha.openplayer"
         minSdk = 24
         targetSdk = 36
-        versionCode = 17
-        versionName = "2.6"
+        versionCode = 18
+        versionName = "2.7"
     }
     
     buildFeatures {
@@ -82,6 +82,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
+    implementation("androidx.media3:media3-session:1.3.1")
     implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.3.1+1")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.exifinterface:exifinterface:1.3.7")

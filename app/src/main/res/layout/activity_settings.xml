@@ -75,6 +75,14 @@
                     android:textSize="13sp" />
             </LinearLayout>
 
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchBgPlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/settings_bg_play"
+                android:textSize="16sp" />
+
             <com.josercha.openplayer.GradientTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

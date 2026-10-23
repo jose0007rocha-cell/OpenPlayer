@@ -1,6 +1,8 @@
 package com.josercha.openplayer
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.media.AudioManager
@@ -18,24 +20,24 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultRenderersFactory
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.SeekParameters
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.CaptionStyleCompat
 import com.josercha.openplayer.databinding.ActivityPlayerBinding
 import com.google.android.material.color.MaterialColors
+import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.util.Locale
 import kotlin.math.abs
@@ -53,9 +55,9 @@ class PlayerActivity : AppCompatActivity() {
 
     private lateinit var b: ActivityPlayerBinding
     private lateinit var audio: AudioManager
-    private var player: ExoPlayer? = null
+    private var player: Player? = null // MediaController ligado ao PlaybackService
+    private var controllerFuture: ListenableFuture<MediaController>? = null
     private var uri: Uri? = null
-    private val prefs by lazy { getSharedPreferences("positions", MODE_PRIVATE) }
 
     private var gestureMode = MODE_NONE
     private var startBrightness = 0.5f
@@ -224,32 +226,65 @@ class PlayerActivity : AppCompatActivity() {
 
     // ---------- Reprodução ----------
 
-    @OptIn(UnstableApi::class)
+    private val errorListener = object : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) {
+            Toast.makeText(this@PlayerActivity, R.string.playback_error, Toast.LENGTH_LONG).show()
+            // Arquivo apagado/movido ou sem permissão: não adianta ficar na tela preta
+            if (error.errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND ||
+                error.errorCode == PlaybackException.ERROR_CODE_IO_NO_PERMISSION
+            ) finish()
+        }
+    }
+
+    /** Conecta ao PlaybackService (o ExoPlayer vive lá) e liga a tela ao player dele. */
     override fun onStart() {
         super.onStart()
         val u = uri ?: return
-        if (player != null) return
-        val p = buildPlayer()
-        p.addListener(object : Player.Listener {
-            override fun onPlayerError(error: PlaybackException) {
-                Toast.makeText(this@PlayerActivity, R.string.playback_error, Toast.LENGTH_LONG).show()
-                // Arquivo apagado/movido ou sem permissão: não adianta ficar na tela preta
-                if (error.errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND ||
-                    error.errorCode == PlaybackException.ERROR_CODE_IO_NO_PERMISSION
-                ) finish()
+        if (controllerFuture != null) return
+        val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
+        val future = MediaController.Builder(this, token).buildAsync()
+        controllerFuture = future
+        future.addListener({
+            // A tela pode ter sido parada antes de a conexão terminar
+            if (controllerFuture !== future) return@addListener
+            val controller = try {
+                future.get()
+            } catch (_: Exception) {
+                controllerFuture = null
+                Toast.makeText(this, R.string.playback_error, Toast.LENGTH_LONG).show()
+                finish()
+                return@addListener
             }
-        })
-        b.playerView.player = p
-        val item = MediaItem.Builder()
-            .setUri(u)
-            .setSubtitleConfigurations(findSubtitles(u))
+            attach(controller, u)
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun attach(c: MediaController, u: Uri) {
+        player = c
+        c.addListener(errorListener)
+        b.playerView.player = c
+        // No fundo o vídeo fica desligado (só o som); ao voltar, liga de novo
+        c.trackSelectionParameters = c.trackSelectionParameters.buildUpon()
+            .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
             .build()
-        val saved = prefs.getLong(u.toString(), 0L)
-        p.setMediaItem(item, if (saved > 0) saved else C.TIME_UNSET)
-        applySubtitleSettings(p)
-        p.prepare()
-        p.playWhenReady = keepPlaying
-        player = p
+        applySubtitleTracks(c)
+
+        val sameVideo = c.currentMediaItem?.mediaId == u.toString() &&
+            c.playbackState != Player.STATE_IDLE
+        if (sameVideo) {
+            // Voltou para um vídeo que continuou tocando em segundo plano
+            if (!AppSettings.backgroundPlay(this)) c.playWhenReady = keepPlaying
+        } else {
+            val item = MediaItem.Builder()
+                .setUri(u)
+                .setMediaId(u.toString())
+                .setSubtitleConfigurations(findSubtitles(u))
+                .build()
+            val saved = Positions.get(this, u)
+            c.setMediaItem(item, if (saved > 0) saved else C.TIME_UNSET)
+            c.prepare()
+            c.playWhenReady = keepPlaying
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -295,25 +330,6 @@ class PlayerActivity : AppCompatActivity() {
         }
     } catch (_: Exception) {
         null
-    }
-
-    @OptIn(UnstableApi::class)
-    private fun buildPlayer(): ExoPlayer {
-        val renderers = DefaultRenderersFactory(this)
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
-            .setEnableDecoderFallback(true)
-        val p = ExoPlayer.Builder(this, renderers)
-            .setHandleAudioBecomingNoisy(true)
-            .build()
-        p.setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .build(),
-            true
-        )
-        p.setSeekParameters(SeekParameters.EXACT)
-        return p
     }
 
     // ---------- Botão de legenda (ativa / desativa) ----------
@@ -365,7 +381,7 @@ class PlayerActivity : AppCompatActivity() {
         b.btnSubs.setColorFilter(accent)
     }
 
-    private fun applySubtitleTracks(p: ExoPlayer) {
+    private fun applySubtitleTracks(p: Player) {
         val enabled = AppSettings.subtitlesOn(this)
         val params = p.trackSelectionParameters.buildUpon()
             .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !enabled)
@@ -376,27 +392,34 @@ class PlayerActivity : AppCompatActivity() {
         p.trackSelectionParameters = params.build()
     }
 
-    @OptIn(UnstableApi::class)
-    private fun applySubtitleSettings(p: ExoPlayer) {
-        applySubtitleTracks(p)
-        // O Media3 cuida do estilo da legenda via XML na PlayerView agora,
-        // então removemos o código que causava o erro de compilação aqui.
-    }
-
     override fun onStop() {
         super.onStop()
         val p = player
         val u = uri
-        if (p != null) keepPlaying = p.playWhenReady
-        if (p != null && u != null) {
-            val dur = p.duration
-            val pos = p.currentPosition
-            val key = u.toString()
-            if (dur > 0 && pos > dur - 3000) prefs.edit().remove(key).apply()
-            else prefs.edit().putLong(key, pos).apply()
+        if (p != null) {
+            keepPlaying = p.playWhenReady
+            if (u != null) Positions.save(this, u, p.currentPosition, p.duration)
+            b.playerView.player = null
+            p.removeListener(errorListener)
+            when {
+                // Saiu do player (botão voltar ou erro): para tudo e encerra o serviço
+                isFinishing -> {
+                    p.stop()
+                    p.clearMediaItems()
+                }
+                // Foi para o início/outro app com o som ligado: continua tocando só o áudio
+                AppSettings.backgroundPlay(this) && p.playWhenReady -> {
+                    p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                        .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
+                        .build()
+                }
+                // Segundo plano desligado: pausa (e lembra se estava tocando)
+                else -> p.pause()
+            }
         }
-        b.playerView.player = null
-        p?.release()
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        controllerFuture = null
         player = null
+        if (isFinishing) stopService(Intent(this, PlaybackService::class.java))
     }
 }

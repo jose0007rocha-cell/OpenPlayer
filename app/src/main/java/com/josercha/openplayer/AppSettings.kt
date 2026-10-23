@@ -18,6 +18,10 @@ object AppSettings {
         else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     }
 
+    // Continuar tocando (só o som) quando o app vai para segundo plano
+    fun backgroundPlay(c: Context): Boolean = p(c).getBoolean("bg_play", true)
+    fun setBackgroundPlay(c: Context, v: Boolean) = p(c).edit().putBoolean("bg_play", v).apply()
+
     fun subtitlesOn(c: Context): Boolean = p(c).getBoolean("subs_on", true)
     fun setSubtitlesOn(c: Context, v: Boolean) = p(c).edit().putBoolean("subs_on", v).apply()
 

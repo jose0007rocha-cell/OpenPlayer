@@ -4,6 +4,10 @@
 
     <!-- Permissões -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Reprodução em segundo plano com notificação de mídia -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <!-- Android 14+: permite o "acesso parcial" (usuário escolhe só alguns vídeos) -->
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
@@ -50,6 +54,17 @@
         <activity
             android:name=".ThemeActivity"
             android:exported="false" />
+
+        <!-- Serviço de reprodução: notificação, tela de bloqueio e (etapa 5) Android Auto -->
+        <service
+            android:name=".PlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".PlayerActivity"

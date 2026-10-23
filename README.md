@@ -38,6 +38,13 @@ Comandos: `gradle assembleGithubRelease` (APK) e `gradle bundlePlayRelease` (AAB
 - `MANAGE_EXTERNAL_STORAGE` **só no sabor `github`**, para excluir sem janelas. A Google Play restringe essa permissão a casos específicos, por isso o sabor `play` não a declara.
 - Legendas externas (`.srt` ao lado do vídeo) dependem de acesso aos arquivos; no sabor `play` podem não ser encontradas no Android 11+.
 
+## Reprodução em segundo plano e notificação
+- O ExoPlayer roda no `PlaybackService` (Media3 `MediaLibraryService`). A tela do player se conecta a ele por um `MediaController`.
+- Há notificação de mídia (play, pause e avançar/voltar) e controles na tela de bloqueio. O Android 13+ pede a permissão de notificações uma vez; sem ela o som continua, só não aparece a notificação.
+- Ao ir para o início ou outro app com o vídeo tocando, o som continua (o vídeo é desligado para poupar bateria). Dá para desligar em Configurações > "Continuar tocando em segundo plano"; desligado, o vídeo pausa ao sair.
+- Pelo botão voltar, a reprodução para e o serviço encerra.
+- Permissões novas: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` e `POST_NOTIFICATIONS`.
+
 ## Release com R8
 O release usa R8 (`isMinifyEnabled` e `isShrinkResources` ligados): código e recursos não usados são removidos e os nomes são ofuscados. As regras ficam em `app/proguard-rules.pro` (Media3 e FFmpeg, Glide, DataBinding e views próprias).
 - O build gera `mapping.txt` (artefato `OpenPlayer-mapping` no Actions). Guarde-o junto de cada versão publicada: sem ele, os crashes saem ilegíveis.
