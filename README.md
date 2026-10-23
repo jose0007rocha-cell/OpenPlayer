@@ -20,7 +20,7 @@ Motor: AndroidX Media3 (ExoPlayer). Abre vídeos locais, links http/https (MP4, 
 
 ## Compatibilidade
 - `minSdk` 24 (Android 7.0), `compileSdk`/`targetSdk` 36 (Android 16). Testado para rodar do Android 10 em diante.
-- Build com Android Gradle Plugin 8.9.1 e Gradle 8.11.1 (JDK 17).
+- Build com Android Gradle Plugin 8.9.1, Gradle 8.11.1 e Kotlin 2.1.0 (JDK 17).
 - Android 15+: a tela ocupa a área toda (edge-to-edge). Android 16: em telas grandes (tablets, dobráveis) a orientação escolhida no player pode ser ignorada pelo sistema.
 
 ## Sabores (distribuição)
