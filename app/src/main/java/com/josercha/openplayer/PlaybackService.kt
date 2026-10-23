@@ -95,7 +95,8 @@ class PlaybackService : MediaLibraryService() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         val p = session?.player
         if (p == null || !p.playWhenReady || p.mediaItemCount == 0 || p.playbackState == Player.STATE_ENDED) {
-            pauseAllPlayersAndStopSelf()
+            p?.pause()
+            stopSelf()
         }
     }
 
