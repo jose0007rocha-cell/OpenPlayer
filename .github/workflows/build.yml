@@ -36,6 +36,13 @@ jobs:
           name: OpenPlayer-release
           path: app/build/outputs/apk/github/release/*.apk
 
+      # Mapa do R8: necessário para decifrar crashes do APK (guarde junto de cada versão)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenPlayer-mapping
+          path: app/build/outputs/mapping/githubRelease/mapping.txt
+          if-no-files-found: warn
+
       # Pacote para a Google Play (sabor "play"). Se falhar, o APK acima continua saindo.
       - name: Build Play bundle (AAB)
         continue-on-error: true

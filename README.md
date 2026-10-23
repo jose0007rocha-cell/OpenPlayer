@@ -38,6 +38,12 @@ Comandos: `gradle assembleGithubRelease` (APK) e `gradle bundlePlayRelease` (AAB
 - `MANAGE_EXTERNAL_STORAGE` **só no sabor `github`**, para excluir sem janelas. A Google Play restringe essa permissão a casos específicos, por isso o sabor `play` não a declara.
 - Legendas externas (`.srt` ao lado do vídeo) dependem de acesso aos arquivos; no sabor `play` podem não ser encontradas no Android 11+.
 
+## Release com R8
+O release usa R8 (`isMinifyEnabled` e `isShrinkResources` ligados): código e recursos não usados são removidos e os nomes são ofuscados. As regras ficam em `app/proguard-rules.pro` (Media3 e FFmpeg, Glide, DataBinding e views próprias).
+- O build gera `mapping.txt` (artefato `OpenPlayer-mapping` no Actions). Guarde-o junto de cada versão publicada: sem ele, os crashes saem ilegíveis.
+- Se aparecer "Missing classes detected while running R8", o log traz as regras sugeridas (`missing_rules.txt`); acrescente-as ao `proguard-rules.pro`.
+- Depois de qualquer mudança de dependência, teste o release (reprodução, legendas, temas, exclusão e "Sobre o app").
+
 ## Tráfego HTTP (cleartext)
 `usesCleartextTraffic="true"` está ligado para permitir links `http://` de vídeos. Risco: esse tráfego não é criptografado e pode ser lido ou alterado na rede. Prefira links `https://`.
 
