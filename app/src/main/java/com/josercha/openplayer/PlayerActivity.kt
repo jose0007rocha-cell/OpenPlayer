@@ -30,6 +30,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -236,6 +237,19 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    /** Se o vídeo ficar desligado com a tela aberta (estado antigo do segundo plano), liga de novo. */
+    private val videoGuard = object : Player.Listener {
+        override fun onTrackSelectionParametersChanged(parameters: TrackSelectionParameters) {
+            if (parameters.disabledTrackTypes.contains(C.TRACK_TYPE_VIDEO)) {
+                player?.let {
+                    it.trackSelectionParameters = parameters.buildUpon()
+                        .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
+                        .build()
+                }
+            }
+        }
+    }
+
     /** Conecta ao PlaybackService (o ExoPlayer vive lá) e liga a tela ao player dele. */
     override fun onStart() {
         super.onStart()
@@ -262,12 +276,9 @@ class PlayerActivity : AppCompatActivity() {
     private fun attach(c: MediaController, u: Uri) {
         player = c
         c.addListener(errorListener)
+        c.addListener(videoGuard)
         b.playerView.player = c
-        // No fundo o vídeo fica desligado (só o som); ao voltar, liga de novo
-        c.trackSelectionParameters = c.trackSelectionParameters.buildUpon()
-            .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
-            .build()
-        applySubtitleTracks(c)
+        applySubtitleTracks(c) // também religa o vídeo, que ficou desligado no segundo plano
 
         val sameVideo = c.currentMediaItem?.mediaId == u.toString() &&
             c.playbackState != Player.STATE_IDLE
@@ -383,7 +394,9 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun applySubtitleTracks(p: Player) {
         val enabled = AppSettings.subtitlesOn(this)
+        // Com a tela aberta o vídeo sempre fica ligado (no fundo ele é desligado só para poupar bateria)
         val params = p.trackSelectionParameters.buildUpon()
+            .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
             .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !enabled)
         if (enabled) {
             params.setPreferredTextLanguage(Locale.getDefault().language)
@@ -401,6 +414,7 @@ class PlayerActivity : AppCompatActivity() {
             if (u != null) Positions.save(this, u, p.currentPosition, p.duration)
             b.playerView.player = null
             p.removeListener(errorListener)
+            p.removeListener(videoGuard)
             when {
                 // Saiu do player (botão voltar ou erro): para tudo e encerra o serviço
                 isFinishing -> {
