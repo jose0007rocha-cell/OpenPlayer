@@ -43,7 +43,7 @@ Comandos: `gradle assembleGithubRelease` (APK) e `gradle bundlePlayRelease` (AAB
 - Há notificação de mídia (play, pause e avançar/voltar) e controles na tela de bloqueio. O Android 13+ pede a permissão de notificações uma vez; sem ela o som continua, só não aparece a notificação.
 - Ao ir para o início ou outro app com o vídeo tocando, o som continua (o vídeo é desligado para poupar bateria). Dá para desligar em Configurações > "Continuar tocando em segundo plano"; desligado, o vídeo pausa ao sair.
 - Pelo botão voltar, a reprodução para e o serviço encerra.
-- Permissões novas: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` e `POST_NOTIFICATIONS`.
+- Permissões novas: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `POST_NOTIFICATIONS` e `WAKE_LOCK` (mantém o som tocando com a tela apagada).
 
 ## Release com R8
 O release usa R8 (`isMinifyEnabled` e `isShrinkResources` ligados): código e recursos não usados são removidos e os nomes são ofuscados. As regras ficam em `app/proguard-rules.pro` (Media3 e FFmpeg, Glide, DataBinding e views próprias).
