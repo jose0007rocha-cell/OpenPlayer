@@ -30,7 +30,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -87,6 +86,8 @@ class PlayerActivity : AppCompatActivity() {
 
         setupGestures()
         setupSubtitleButton()
+        b.playerView.setKeepContentOnPlayerReset(true)
+        b.playerView.setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
 
         uri = intent?.data
         if (uri == null) finish()
@@ -237,19 +238,6 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    /** Se o vídeo ficar desligado com a tela aberta (estado antigo do segundo plano), liga de novo. */
-    private val videoGuard = object : Player.Listener {
-        override fun onTrackSelectionParametersChanged(parameters: TrackSelectionParameters) {
-            if (parameters.disabledTrackTypes.contains(C.TRACK_TYPE_VIDEO)) {
-                player?.let {
-                    it.trackSelectionParameters = parameters.buildUpon()
-                        .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
-                        .build()
-                }
-            }
-        }
-    }
-
     /** Conecta ao PlaybackService (o ExoPlayer vive lá) e liga a tela ao player dele. */
     override fun onStart() {
         super.onStart()
@@ -276,7 +264,6 @@ class PlayerActivity : AppCompatActivity() {
     private fun attach(c: MediaController, u: Uri) {
         player = c
         c.addListener(errorListener)
-        c.addListener(videoGuard)
         b.playerView.player = c
         applySubtitleTracks(c) // também religa o vídeo, que ficou desligado no segundo plano
 
@@ -285,6 +272,10 @@ class PlayerActivity : AppCompatActivity() {
         if (sameVideo) {
             // Voltou para um vídeo que continuou tocando em segundo plano
             if (!AppSettings.backgroundPlay(this)) c.playWhenReady = keepPlaying
+            // A tela nova ainda não recebeu nenhum quadro: um pequeno "seek" no mesmo ponto força o desenho
+            b.playerView.postDelayed({
+                if (player === c && c.playbackState == Player.STATE_READY) c.seekTo(c.currentPosition)
+            }, 350)
         } else {
             val item = MediaItem.Builder()
                 .setUri(u)
@@ -414,19 +405,14 @@ class PlayerActivity : AppCompatActivity() {
             if (u != null) Positions.save(this, u, p.currentPosition, p.duration)
             b.playerView.player = null
             p.removeListener(errorListener)
-            p.removeListener(videoGuard)
             when {
                 // Saiu do player (botão voltar ou erro): para tudo e encerra o serviço
                 isFinishing -> {
                     p.stop()
                     p.clearMediaItems()
                 }
-                // Foi para o início/outro app com o som ligado: continua tocando só o áudio
-                AppSettings.backgroundPlay(this) && p.playWhenReady -> {
-                    p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
-                        .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
-                        .build()
-                }
+                // Foi para o início/outro app com o som ligado: continua tocando (sem tela)
+                AppSettings.backgroundPlay(this) && p.playWhenReady -> Unit
                 // Segundo plano desligado: pausa (e lembra se estava tocando)
                 else -> p.pause()
             }
