@@ -257,7 +257,7 @@ class PlayerActivity : AppCompatActivity() {
                 finish()
                 return@addListener
             }
-            attach(controller, u)
+            attach(controller, uri ?: u)
         }, ContextCompat.getMainExecutor(this))
     }
 
@@ -265,7 +265,12 @@ class PlayerActivity : AppCompatActivity() {
         player = c
         c.addListener(errorListener)
         b.playerView.player = c
-        applySubtitleTracks(c) // também religa o vídeo, que ficou desligado no segundo plano
+        loadVideo(c, u)
+    }
+
+    /** Liga a tela ao vídeo: continua o que já toca no serviço ou começa o novo. */
+    private fun loadVideo(c: MediaController, u: Uri) {
+        applySubtitleTracks(c) // também garante o vídeo ligado
 
         val sameVideo = c.currentMediaItem?.mediaId == u.toString() &&
             c.playbackState != Player.STATE_IDLE
@@ -287,6 +292,19 @@ class PlayerActivity : AppCompatActivity() {
             c.prepare()
             c.playWhenReady = keepPlaying
         }
+    }
+
+    /**
+     * Tocar na notificação (ou abrir outro vídeo por um app externo) com o player já aberto chega aqui,
+     * em vez de criar uma segunda tela do player por cima da primeira.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val u = intent.data ?: return
+        if (u == uri) return
+        uri = u
+        player?.let { loadVideo(it, u) }
     }
 
     @OptIn(UnstableApi::class)

@@ -125,7 +125,12 @@ class PlaybackService : MediaLibraryService() {
         val id = item?.mediaId?.takeIf { it.isNotEmpty() } ?: return
         val intent = Intent(this, PlayerActivity::class.java).apply {
             data = Uri.parse(id)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            // Reaproveita a tela do player que já existe (CLEAR_TOP + SINGLE_TOP), sem criar outra por cima
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            )
         }
         val pi = PendingIntent.getActivity(
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
