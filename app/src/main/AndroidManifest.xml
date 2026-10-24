@@ -53,6 +53,11 @@
             android:name=".SettingsActivity"
             android:exported="false" />
 
+        <!-- Android Auto: app de mídia (navegar pelas pastas e tocar). Ver README. -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
         <activity
             android:name=".ThemeActivity"
             android:exported="false" />
@@ -71,6 +76,7 @@
         <activity
             android:name=".PlayerActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
             android:theme="@style/Theme.OpenPlayer.Player">
             <intent-filter>

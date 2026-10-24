@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Declara que o app é um app de mídia para o Android Auto (navegar e tocar pelo serviço de reprodução) -->
+<automotiveApp>
+    <uses name="media" />
+</automotiveApp>

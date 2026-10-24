@@ -22,6 +22,10 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.SessionResult
+import com.google.common.collect.ImmutableList
+import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListeningExecutorService
 import com.google.common.util.concurrent.MoreExecutors
@@ -41,7 +45,51 @@ class PlaybackService : MediaLibraryService() {
     private val io: ListeningExecutorService =
         MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor())
 
+    private companion object {
+        const val ROOT_ID = "root"
+        const val FOLDER_PREFIX = "folder:"
+    }
+
     private val callback = object : MediaLibrarySession.Callback {
+
+        // ---------- Navegação (Android Auto): raiz > pastas > vídeos ----------
+
+        override fun onGetLibraryRoot(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<MediaItem>> =
+            Futures.immediateFuture(LibraryResult.ofItem(rootItem(), params))
+
+        override fun onGetChildren(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            parentId: String,
+            page: Int,
+            pageSize: Int,
+            params: MediaLibraryService.LibraryParams?
+        ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> =
+            io.submit(Callable<LibraryResult<ImmutableList<MediaItem>>> {
+                val all = children(parentId)
+                val from = (page.toLong() * pageSize).coerceAtMost(all.size.toLong()).toInt()
+                val to = (from.toLong() + pageSize).coerceAtMost(all.size.toLong()).toInt()
+                LibraryResult.ofItemList(ImmutableList.copyOf(all.subList(from, to)), params)
+            })
+
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String
+        ): ListenableFuture<LibraryResult<MediaItem>> =
+            io.submit(Callable<LibraryResult<MediaItem>> {
+                val item = findItem(mediaId)
+                if (item != null) {
+                    LibraryResult.ofItem(item, null)
+                } else {
+                    LibraryResult.ofError<MediaItem>(SessionResult.RESULT_ERROR_BAD_VALUE)
+                }
+            })
+
         /** Completa o item (título, pasta e capa) antes de ele ir para o player. */
         override fun onAddMediaItems(
             mediaSession: MediaSession,
@@ -109,6 +157,71 @@ class PlaybackService : MediaLibraryService() {
         session = null
         io.shutdown()
         super.onDestroy()
+    }
+
+    // ---------- Biblioteca para o Android Auto ----------
+
+    private fun rootItem(): MediaItem = MediaItem.Builder()
+        .setMediaId(ROOT_ID)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(getString(R.string.app_name))
+                .setIsBrowsable(true)
+                .setIsPlayable(false)
+                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                .build()
+        )
+        .build()
+
+    private fun folderItem(f: Folder): MediaItem = MediaItem.Builder()
+        .setMediaId(FOLDER_PREFIX + f.id)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(f.name)
+                .setIsBrowsable(true)
+                .setIsPlayable(false)
+                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                .build()
+        )
+        .build()
+
+    /** O id do vídeo é o próprio endereço dele; o onAddMediaItems usa isso para tocar. */
+    private fun videoItem(v: Video): MediaItem = MediaItem.Builder()
+        .setMediaId(v.uri.toString())
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(v.name.substringBeforeLast('.'))
+                .setArtist(v.folderName)
+                .setIsBrowsable(false)
+                .setIsPlayable(true)
+                .setMediaType(MediaMetadata.MEDIA_TYPE_VIDEO)
+                .build()
+        )
+        .build()
+
+    private fun children(parentId: String): List<MediaItem> {
+        // Sem a permissão de vídeos, a lista vem vazia (o usuário libera no celular)
+        if (!VideoRepository.hasPermission(this)) return emptyList()
+        val videos = VideoRepository.load(this)
+        return when {
+            parentId == ROOT_ID -> VideoRepository.folders(videos).map { folderItem(it) }
+            parentId.startsWith(FOLDER_PREFIX) -> {
+                val id = parentId.removePrefix(FOLDER_PREFIX).toLongOrNull() ?: return emptyList()
+                videos.filter { it.folderId == id }.map { videoItem(it) }
+            }
+            else -> emptyList()
+        }
+    }
+
+    private fun findItem(mediaId: String): MediaItem? {
+        if (mediaId == ROOT_ID) return rootItem()
+        if (!VideoRepository.hasPermission(this)) return null
+        val videos = VideoRepository.load(this)
+        if (mediaId.startsWith(FOLDER_PREFIX)) {
+            val id = mediaId.removePrefix(FOLDER_PREFIX).toLongOrNull() ?: return null
+            return VideoRepository.folders(videos).firstOrNull { it.id == id }?.let { folderItem(it) }
+        }
+        return videos.firstOrNull { it.uri.toString() == mediaId }?.let { videoItem(it) }
     }
 
     // ---------- Posição e notificação ----------

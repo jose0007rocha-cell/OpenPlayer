@@ -45,6 +45,14 @@ Comandos: `gradle assembleGithubRelease` (APK) e `gradle bundlePlayRelease` (AAB
 - Pelo botão voltar, a reprodução para e o serviço encerra.
 - Permissões novas: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `POST_NOTIFICATIONS` e `WAKE_LOCK` (mantém o som tocando com a tela apagada).
 
+## Android Auto (MVP)
+O app é um app de mídia para o Android Auto: o carro navega pelas **pastas > vídeos** do celular e toca pelo mesmo serviço de reprodução (`PlaybackService`, um `MediaLibraryService`). O Android Auto mostra a interface do carro sozinho, por isso não usa a biblioteca de templates `androidx.car.app`.
+- Arquivos: `res/xml/automotive_app_desc.xml` (declara `<uses name="media"/>`), `meta-data` `com.google.android.gms.car.application` no manifest e a navegação em `PlaybackService.kt` (`onGetLibraryRoot`, `onGetChildren`, `onGetItem`).
+- No carro toca só o **áudio** dos vídeos; o Android Auto não exibe vídeo.
+- Precisa da permissão de vídeos já liberada no celular (sem ela as listas aparecem vazias).
+- Fora do MVP: busca por voz, capas nas listas, listas de reprodução e favoritos, Android Automotive OS (carros com Android embutido).
+- Testar: instale o app, no celular abra Android Auto > Configurações > toque 10 vezes em "Versão" para liberar o modo desenvolvedor > ative "Fontes desconhecidas" (APK fora da Play) e conecte ao carro ou use o Desktop Head Unit (DHU).
+
 ## Release com R8
 O release usa R8 (`isMinifyEnabled` e `isShrinkResources` ligados): código e recursos não usados são removidos e os nomes são ofuscados. As regras ficam em `app/proguard-rules.pro` (Media3 e FFmpeg, Glide, DataBinding e views próprias).
 - O build gera `mapping.txt` (artefato `OpenPlayer-mapping` no Actions). Guarde-o junto de cada versão publicada: sem ele, os crashes saem ilegíveis.
