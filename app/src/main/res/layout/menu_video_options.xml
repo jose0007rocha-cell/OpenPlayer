@@ -28,31 +28,22 @@
         android:textSize="16sp"
         android:textColor="#F0F0F0"/>
 
+
+    <TextView
+        android:id="@+id/optRename"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Renomear"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground"
+        android:textSize="16sp"
+        android:textColor="#F0F0F0"/>
+
     <TextView
         android:id="@+id/optProperties"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Propriedades"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
-        android:textSize="16sp"
-        android:textColor="#F0F0F0"/>
-
-    <TextView
-        android:id="@+id/optPlaylist"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Adicionar à lista de reprodução"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
-        android:textSize="16sp"
-        android:textColor="#F0F0F0"/>
-
-    <TextView
-        android:id="@+id/optSelectAll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Excluir todos da pasta"
         android:padding="12dp"
         android:background="?attr/selectableItemBackground"
         android:textSize="16sp"

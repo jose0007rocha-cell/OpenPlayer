@@ -177,30 +177,11 @@
 
     <string name="settings_subs_enable">Ativar legendas</string>
 
-    <string name="settings_subs_render">Renderização de legendas</string>
-
-    <string name="settings_sub_size">Tamanho da legenda</string>
-
-    <string name="settings_sub_style">Estilo da legenda</string>
-
     <string-array name="rotation_options">
         <item>Seguir o sistema</item>
         <item>Automática (sensor)</item>
         <item>Retrato</item>
         <item>Paisagem</item>
-    </string-array>
-
-    <string-array name="sub_size_options">
-        <item>Pequena</item>
-        <item>Média</item>
-        <item>Grande</item>
-    </string-array>
-
-    <string-array name="sub_style_options">
-        <item>Branca com sombra</item>
-        <item>Branca com fundo preto</item>
-        <item>Branca com contorno</item>
-        <item>Amarela com sombra</item>
     </string-array>
     <string name="popup_sort">Ordenar</string>
     <string name="sort_by">Ordenar por</string>
@@ -254,4 +235,15 @@
     <string name="sel_all">Selecionar todos</string>
     <string name="settings_bg_play">Continuar tocando em segundo plano</string>
     <string name="playback_channel">Reprodução</string>
+    <string-array name="sub_render_options">
+        <item>Mantenha o estilo integrado</item>
+    </string-array>
+    <string name="sub_render_integrated_desc">Exibe a legenda da maneira original.</string>
+    <string name="rename_title">Renomear vídeo</string>
+    <string name="rename_ok">Renomear</string>
+    <string name="rename_empty">Digite um nome</string>
+    <string name="rename_invalid">Esse nome tem caracteres que não podem ser usados.</string>
+    <string name="rename_exists">Já existe um vídeo com esse nome nesta pasta.</string>
+    <string name="rename_done">Vídeo renomeado</string>
+    <string name="rename_fail">Não foi possível renomear o vídeo</string>
 </resources>

@@ -19,7 +19,8 @@ object PopupDialog {
         val title: String?,
         val items: List<String>,
         var selected: Int,
-        val onPick: (Int) -> Unit
+        val onPick: (Int) -> Unit,
+        val descriptions: List<String>? = null
     )
 
     fun show(a: Activity, title: String?, groups: List<Group>, closeOnPick: Boolean): Dialog {
@@ -51,6 +52,12 @@ object PopupDialog {
                 val row = inflater.inflate(R.layout.row_popup_option, body, false)
                 val rb = row.findViewById<RadioButton>(R.id.optRadio)
                 row.findViewById<TextView>(R.id.optLabel).text = label
+                g.descriptions?.getOrNull(i)?.let { d ->
+                    row.findViewById<TextView>(R.id.optDesc).apply {
+                        text = d
+                        visibility = View.VISIBLE
+                    }
+                }
                 rb.isChecked = i == g.selected
                 radios.add(rb)
                 row.setOnClickListener {

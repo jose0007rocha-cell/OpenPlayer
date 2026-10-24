@@ -39,6 +39,10 @@ object AppSettings {
     fun subStyle(c: Context): Int = p(c).getInt("sub_style", 0)
     fun setSubStyle(c: Context, v: Int) = p(c).edit().putInt("sub_style", v).apply()
 
+    // Renderização da legenda: 0 = manter o estilo integrado (como veio no arquivo)
+    fun subRender(c: Context): Int = p(c).getInt("sub_render", 0)
+    fun setSubRender(c: Context, v: Int) = p(c).edit().putInt("sub_render", v).apply()
+
     // Ordenação dentro das pastas: 0 = nome (A-Z), 1 = tamanho
     fun sortBy(c: Context): Int = p(c).getInt("sort_by", 0)
     fun setSortBy(c: Context, v: Int) = p(c).edit().putInt("sort_by", v).apply()

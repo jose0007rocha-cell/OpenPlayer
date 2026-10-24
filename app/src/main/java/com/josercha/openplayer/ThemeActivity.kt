@@ -3,6 +3,7 @@ package com.josercha.openplayer
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.InsetDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -234,18 +235,22 @@ class ThemeActivity : AppCompatActivity() {
             val swatch = TextView(this).apply {
                 text = if (accent.id == current) "✓" else ""
                 gravity = Gravity.CENTER
-                textSize = 15f
+                textSize = 13f
                 setTextColor(textColor)
-                background = GradientDrawable().apply {
-                    shape = GradientDrawable.OVAL
-                    setOrientation(GradientDrawable.Orientation.TL_BR)
-                    setColors(intArrayOf(color, colorEnd))
-                }
+                // Área de toque de 40 dp, com a bolinha de 28 dp desenhada no meio
+                background = InsetDrawable(
+                    GradientDrawable().apply {
+                        shape = GradientDrawable.OVAL
+                        setOrientation(GradientDrawable.Orientation.TL_BR)
+                        setColors(intArrayOf(color, colorEnd))
+                    },
+                    dp(6)
+                )
                 contentDescription = getString(accent.nameRes)
                 layoutParams = GridLayout.LayoutParams().apply {
-                    width = dp(36)
-                    height = dp(36)
-                    setMargins(dp(6), dp(6), dp(6), dp(6))
+                    width = dp(40)
+                    height = dp(40)
+                    setMargins(dp(1), dp(1), dp(1), dp(1))
                 }
                 setOnClickListener {
                     ThemeManager.setAccent(this@ThemeActivity, accent.id)

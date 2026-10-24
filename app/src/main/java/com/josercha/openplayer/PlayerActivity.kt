@@ -91,6 +91,7 @@ class PlayerActivity : AppCompatActivity() {
 
         setupGestures()
         setupSubtitleButton()
+        applySubtitleStyle()
         b.playerView.setKeepContentOnPlayerReset(true)
         b.playerView.setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
 
@@ -357,6 +358,27 @@ class PlayerActivity : AppCompatActivity() {
         }
     } catch (_: Exception) {
         null
+    }
+
+    /**
+     * "Mantenha o estilo integrado": usa o estilo e o tamanho que vêm no arquivo da legenda (ASS, VTT...).
+     * Para as legendas sem estilo (SRT), o padrão é branca com sombra, tamanho médio.
+     */
+    private fun applySubtitleStyle() {
+        val sv = b.playerView.subtitleView ?: return
+        sv.setApplyEmbeddedStyles(true)
+        sv.setApplyEmbeddedFontSizes(true)
+        sv.setStyle(
+            CaptionStyleCompat(
+                android.graphics.Color.WHITE,
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT,
+                CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW,
+                android.graphics.Color.BLACK,
+                null
+            )
+        )
+        sv.setFractionalTextSize(0.0533f)
     }
 
     // ---------- Botão de legenda (ativa / desativa) ----------

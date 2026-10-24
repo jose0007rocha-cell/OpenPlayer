@@ -32,18 +32,7 @@ class SettingsActivity : AppCompatActivity() {
                 refresh()
             }
         }
-        b.rowSubSize.setOnClickListener {
-            choose(R.string.settings_sub_size, R.array.sub_size_options, AppSettings.subSize(this)) {
-                AppSettings.setSubSize(this, it)
-                refresh()
-            }
-        }
-        b.rowSubStyle.setOnClickListener {
-            choose(R.string.settings_sub_style, R.array.sub_style_options, AppSettings.subStyle(this)) {
-                AppSettings.setSubStyle(this, it)
-                refresh()
-            }
-        }
+        b.rowSubRender.setOnClickListener { chooseSubRender() }
         b.aboutName.text = "OpenPlayer V" + AboutDialog.installedVersion(this)
         b.rowAbout.setOnClickListener { AboutDialog.show(this) }
         refresh()
@@ -51,8 +40,25 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun refresh() {
         b.rotationValue.text = resources.getStringArray(R.array.rotation_options)[AppSettings.rotation(this)]
-        b.subSizeValue.text = resources.getStringArray(R.array.sub_size_options)[AppSettings.subSize(this)]
-        b.subStyleValue.text = resources.getStringArray(R.array.sub_style_options)[AppSettings.subStyle(this)]
+        b.subRenderValue.text = resources.getStringArray(R.array.sub_render_options)[AppSettings.subRender(this)]
+    }
+
+    /** "Renderização da legenda": por enquanto só "Mantenha o estilo integrado" (a legenda como veio no arquivo). */
+    private fun chooseSubRender() {
+        PopupDialog.show(
+            this,
+            getString(R.string.subs_render),
+            listOf(
+                PopupDialog.Group(
+                    null,
+                    resources.getStringArray(R.array.sub_render_options).toList(),
+                    AppSettings.subRender(this),
+                    { AppSettings.setSubRender(this, it); refresh() },
+                    listOf(getString(R.string.sub_render_integrated_desc))
+                )
+            ),
+            true
+        )
     }
 
     private fun choose(title: Int, itemsRes: Int, current: Int, onPick: (Int) -> Unit) {

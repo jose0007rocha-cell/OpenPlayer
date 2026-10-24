@@ -3,11 +3,15 @@ package com.josercha.openplayer
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.text.format.Formatter
 import android.view.View
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -130,14 +134,9 @@ class FolderActivity : AppCompatActivity() {
             dialog.dismiss()
         }
 
-        view.findViewById<View>(R.id.optPlaylist).setOnClickListener {
-            Toast.makeText(this, "Adicionar à playlist em breve", Toast.LENGTH_SHORT).show()
+        view.findViewById<View>(R.id.optRename).setOnClickListener {
             dialog.dismiss()
-        }
-        
-        view.findViewById<View>(R.id.optSelectAll).setOnClickListener {
-            adapter.selectAll()
-            dialog.dismiss()
+            mostrarDialogoRenomear(video)
         }
 
         view.findViewById<View>(R.id.optDelete).setOnClickListener {
@@ -145,6 +144,65 @@ class FolderActivity : AppCompatActivity() {
             dialog.dismiss()
         }
 
+        dialog.show()
+    }
+
+    // ---------- Renomear ----------
+
+    private val renamer = RenameHelper(this) { ok, cancelled ->
+        when {
+            ok -> {
+                Toast.makeText(this, R.string.rename_done, Toast.LENGTH_SHORT).show()
+                reloadVideos()
+            }
+            !cancelled -> Toast.makeText(this, R.string.rename_fail, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun mostrarDialogoRenomear(video: Video) {
+        val dot = video.name.lastIndexOf('.')
+        val base = if (dot > 0) video.name.substring(0, dot) else video.name
+        val ext = if (dot > 0) video.name.substring(dot) else ""
+        val density = resources.displayMetrics.density
+        val input = EditText(this).apply {
+            setText(base)
+            setSelection(base.length)
+            inputType = InputType.TYPE_CLASS_TEXT
+            setSingleLine(true)
+        }
+        val box = FrameLayout(this).apply {
+            val pad = (20 * density).toInt()
+            setPadding(pad, (8 * density).toInt(), pad, 0)
+            addView(input, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT
+            ))
+        }
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.rename_title)
+            .setView(box)
+            .setPositiveButton(R.string.rename_ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+        dialog.setOnShowListener {
+            input.requestFocus()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val typed = input.text.toString().trim()
+                val full = typed + ext
+                when {
+                    typed.isEmpty() -> input.error = getString(R.string.rename_empty)
+                    typed.startsWith(".") || typed.any { it in "/\\:*?\"<>|" } ->
+                        input.error = getString(R.string.rename_invalid)
+                    full == video.name -> dialog.dismiss()
+                    videos.any { it.name.equals(full, ignoreCase = true) && it.uri != video.uri } ->
+                        input.error = getString(R.string.rename_exists)
+                    else -> {
+                        dialog.dismiss()
+                        renamer.rename(video, full)
+                    }
+                }
+            }
+        }
+        dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
         dialog.show()
     }
 

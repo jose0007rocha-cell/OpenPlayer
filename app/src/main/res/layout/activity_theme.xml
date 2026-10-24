@@ -9,11 +9,11 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingHorizontal="16dp"
-            android:paddingBottom="24dp">
+            android:paddingBottom="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="48dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -50,17 +50,17 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="4dp"
                 android:text="@string/bg_title"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
             <ImageView
                 android:id="@+id/bgPreview"
-                android:layout_width="170dp"
-                android:layout_height="340dp"
+                android:layout_width="96dp"
+                android:layout_height="192dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:background="@drawable/bg_portrait"
                 android:clipToOutline="true"
                 android:contentDescription="@string/bg_pick"
@@ -70,7 +70,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:orientation="horizontal">
 
                 <Button
@@ -94,7 +94,7 @@
                 android:id="@+id/dimLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:text="@string/bg_dim"
                 android:textSize="13sp"
                 android:visibility="gone" />
@@ -133,7 +133,7 @@
                 android:id="@+id/switchAmoled"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="4dp"
                 android:minHeight="48dp"
                 android:text="@string/amoled"
                 android:textSize="16sp" />
@@ -141,7 +141,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/accent_title"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -150,8 +150,8 @@
                 android:id="@+id/accentGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:columnCount="5" />
+                android:layout_marginTop="2dp"
+                android:columnCount="6" />
         </LinearLayout>
     </ScrollView>
 </layout>
