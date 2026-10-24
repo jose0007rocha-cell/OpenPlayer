@@ -51,6 +51,10 @@ class PlayerActivity : AppCompatActivity() {
         const val MODE_VOLUME = 2
         const val MODE_SEEK = 3
         const val SEEK_FULL_WIDTH_MS = 120_000L
+
+        // Todas as telas do player dividem o mesmo ExoPlayer (no serviço). Só a tela mais nova é a "dona":
+        // uma tela antiga que está sendo fechada não pode soltar a imagem da nova.
+        var ownerToken = 0
     }
 
     private lateinit var b: ActivityPlayerBinding
@@ -58,6 +62,7 @@ class PlayerActivity : AppCompatActivity() {
     private var player: Player? = null // MediaController ligado ao PlaybackService
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var uri: Uri? = null
+    private var myToken = 0
 
     private var gestureMode = MODE_NONE
     private var startBrightness = 0.5f
@@ -243,6 +248,7 @@ class PlayerActivity : AppCompatActivity() {
         super.onStart()
         val u = uri ?: return
         if (controllerFuture != null) return
+        b.playerView.player = null // ligação velha (de antes de parar) fora; a nova entra em attach()
         val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
         val future = MediaController.Builder(this, token).buildAsync()
         controllerFuture = future
@@ -262,6 +268,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun attach(c: MediaController, u: Uri) {
+        myToken = ++ownerToken
         player = c
         c.addListener(errorListener)
         b.playerView.player = c
@@ -269,7 +276,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     /** Liga a tela ao vídeo: continua o que já toca no serviço ou começa o novo. */
-    private fun loadVideo(c: MediaController, u: Uri) {
+    private fun loadVideo(c: Player, u: Uri) {
         applySubtitleTracks(c) // também garante o vídeo ligado
 
         val sameVideo = c.currentMediaItem?.mediaId == u.toString() &&
@@ -418,7 +425,8 @@ class PlayerActivity : AppCompatActivity() {
         super.onStop()
         val p = player
         val u = uri
-        if (p != null) {
+        val owner = myToken == ownerToken
+        if (p != null && owner) {
             keepPlaying = p.playWhenReady
             if (u != null) Positions.save(this, u, p.currentPosition, p.duration)
             b.playerView.player = null
@@ -434,10 +442,13 @@ class PlayerActivity : AppCompatActivity() {
                 // Segundo plano desligado: pausa (e lembra se estava tocando)
                 else -> p.pause()
             }
+        } else if (p != null) {
+            // Uma tela mais nova já assumiu o player: esta só solta a conexão, sem mexer no vídeo dela
+            p.removeListener(errorListener)
         }
         controllerFuture?.let { MediaController.releaseFuture(it) }
         controllerFuture = null
         player = null
-        if (isFinishing) stopService(Intent(this, PlaybackService::class.java))
+        if (isFinishing && owner) stopService(Intent(this, PlaybackService::class.java))
     }
 }
