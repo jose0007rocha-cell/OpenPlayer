@@ -53,9 +53,11 @@ class SettingsActivity : AppCompatActivity() {
                     null,
                     resources.getStringArray(R.array.sub_render_options).toList(),
                     AppSettings.subRender(this),
-                    { AppSettings.setSubRender(this, it); refresh() },
                     listOf(getString(R.string.sub_render_integrated_desc))
-                )
+                ) {
+                    AppSettings.setSubRender(this, it)
+                    refresh()
+                }
             ),
             true
         )
@@ -65,7 +67,7 @@ class SettingsActivity : AppCompatActivity() {
         PopupDialog.show(
             this,
             getString(title),
-            listOf(PopupDialog.Group(null, resources.getStringArray(itemsRes).toList(), current, onPick)),
+            listOf(PopupDialog.Group(null, resources.getStringArray(itemsRes).toList(), current, onPick = onPick)),
             true
         )
     }

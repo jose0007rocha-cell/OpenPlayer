@@ -19,8 +19,8 @@ object PopupDialog {
         val title: String?,
         val items: List<String>,
         var selected: Int,
-        val onPick: (Int) -> Unit,
-        val descriptions: List<String>? = null
+        val descriptions: List<String>? = null,
+        val onPick: (Int) -> Unit // por último, para poder usar a chamada com { ... } no final
     )
 
     fun show(a: Activity, title: String?, groups: List<Group>, closeOnPick: Boolean): Dialog {
